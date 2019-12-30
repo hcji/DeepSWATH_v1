@@ -1,0 +1,4 @@
+*.pyc
+/.spyproject
+/__pycache__
+/Demo/
