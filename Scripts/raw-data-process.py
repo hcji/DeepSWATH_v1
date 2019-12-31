@@ -32,7 +32,7 @@ if __name__ == '__main__':
         exs = features[['precursor_mz', 'precursor_rt']]
         exs = exs.drop_duplicates()
         
-        for i in tqdm(range(len(exs))):
+        for i in tqdm(exs.index):
             exrt = exs['precursor_rt'][i]
             exmz = exs['precursor_mz'][i]
             
@@ -44,7 +44,7 @@ if __name__ == '__main__':
             exeic = extract_eic(peaks, exmz, exrt, rtlength=30)
             # plt.plot(exeic[0], exeic[1])
             
-            for j in range(len(frags)):
+            for j in frags.index:
                 fragmz = frags['mz'][j]
                 abund = frags['intensity'][j]
                 
