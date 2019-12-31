@@ -3,8 +3,8 @@ library(xcms)
 
 cs_pos <- list.files('D:/MetaboDIA_data/CS', pattern = '*_pos_IDA.mzXML')
 for (f in cs_pos){
-  o <- stringr::str_replace(f, '.mzXML', '.ms2.csv')
   f <- paste('D:/MetaboDIA_data/CS/', f, sep='')
+  o <- stringr::str_replace(f, '.mzXML', '.ms2.csv')
   dda_data <- readMSData(f, mode = "onDisk")
   
   cwp <- CentWaveParam(snthresh = 5, noise = 50, ppm = 30, peakwidth = c(5, 60))
@@ -19,7 +19,7 @@ for (f in cs_pos){
     ex_rt <- peaks[id, 'rt']
     ex_spectra <- dda_spectra[mcols(dda_spectra)$peak_id == id]
     ex_spectrum <- combineSpectra(ex_spectra, method = consensusSpectrum, mzd = 0,
-                                  ppm = 20, minProp = 0.8, weighted = FALSE,
+                                  ppm = 30, minProp = 0.8, weighted = FALSE,
                                   intensityFun = median, mzFun = median)
     if (length(ex_spectrum) == 0 || length(mz(ex_spectrum)[[1]]) == 0){
       next
