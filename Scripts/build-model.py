@@ -61,7 +61,7 @@ class DIANet:
         
         # call back
         earlyStopping = EarlyStopping(monitor='val_loss', patience=5, verbose=0, mode='min')
-        mcp_save = ModelCheckpoint('Model/DeepDIA_model.h5', save_best_only=True, monitor='val_loss', mode='min')
+        mcp_save = ModelCheckpoint('Model/DeepDIA_Model.h5', save_best_only=True, monitor='val_loss', mode='min')
         reduce_lr_loss = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=3, verbose=1, epsilon=1e-4, mode='min')
         
         self.model.fit([X1, X2], [Y], epochs=epochs, callbacks=[earlyStopping, mcp_save, reduce_lr_loss], validation_split=0.1)
@@ -120,6 +120,7 @@ if __name__ == '__main__':
     mod.train(epochs=50)
     
     # evaluation
+    mod = load_model('Model/DeepDIA_Model.h5')
     X1_ts = np.expand_dims(X1_ts,-1)
     X2_ts = np.expand_dims(X2_ts,-1)
     Y_pred = mod.predict([X1_ts, X2_ts])
@@ -128,7 +129,7 @@ if __name__ == '__main__':
     acc = accuracy_score(Y_ts[:,0], Y_pred[:,0])
     confusion = confusion_matrix(Y_ts[:,0], Y_pred[:,0])
     plot_roc(Y_pred, Y_ts, classes=['fragment', 'decoy'])
-    precision_score(Y_ts[:,0], Y_pred[:,0])
-    recall_score(Y_ts[:,0], Y_pred[:,0])
+    precision = precision_score(Y_ts[:,0], Y_pred[:,0])
+    recall = recall_score(Y_ts[:,0], Y_pred[:,0])
     
     
