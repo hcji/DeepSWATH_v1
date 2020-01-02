@@ -29,6 +29,11 @@ if __name__ == '__main__':
         features = pd.read_csv(x)
         peaks = parser_mzxml(f)
         
+        peaks1 = [p for p in peaks if p.getMSLevel()==1]
+        peaks2 = [p for p in peaks if p.getMSLevel()==2]
+        precursors = np.unique([p.getPrecursors()[0].getMZ() for p in peaks2])
+        del(peaks)
+        
         exs = features[['precursor_mz', 'precursor_rt']]
         exs = exs.drop_duplicates()
         
@@ -39,9 +44,9 @@ if __name__ == '__main__':
             frags = features[features['precursor_rt']==exrt]
             frags = frags[frags['precursor_mz']==exmz]
             
-            ms2 = get_ms2(peaks, exmz, exrt)
+            ms2 = get_ms2(peaks2, precursors, exmz, exrt)
             decoy_mzs = [m for m in ms2[0] if np.min(np.abs(m - frags['mz'])) > 5]
-            exeic = extract_eic(peaks, exmz, exrt, rtlength=30)
+            exeic = extract_eic(peaks1, exmz, exrt, rtlength=30)
             # plt.plot(exeic[0], exeic[1])
             
             for j in frags.index:
@@ -57,8 +62,8 @@ if __name__ == '__main__':
                 else:
                     decoy_mz = randint(0, int(exmz*1000)) / 1000
                     
-                frageic = fragment_eic(peaks, exmz, exrt, fragmz, rtlength=35)
-                decoyeic = fragment_eic(peaks, exmz, exrt, decoy_mz, rtlength=35)
+                frageic = fragment_eic(peaks2, precursors, exmz, exrt, fragmz, rtlength=35)
+                decoyeic = fragment_eic(peaks2, precursors, exmz, exrt, decoy_mz, rtlength=35)
                 # plt.plot(frageic[0], frageic[1])
                 # plt.plot(decoyeic[0], decoyeic[1])
             
