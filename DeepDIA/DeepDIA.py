@@ -5,14 +5,43 @@ Created on Wed Jan  1 07:37:03 2020
 @author: yn
 """
 
+import numpy as np
+import pandas as pd
+from tqdm import tqdm
+from tensorflow.keras.models import load_model
 from DeepDIA.utils import parser_mzxml, extract_eic, fragment_eic, get_ms2
-import rpy2.robjects as robjects
-import rpy2.robjects.numpy2ri as numpy2ri
-numpy2ri.activate()
-robjects.r('''source('DeepDIA/xcms.R')''')
-get_fingerprint = robjects.globalenv['get_ms1_features']
 
-
-def DeepDIA_process(file):
-    # file = 'D:/MetaboDIA_data/CS/CS53088_neg_SWATH.mzXML'
-    features = get_ms1_features(file)
+def DeepDIA_process(file, features, noise=50):
+    # file = 'Example/CS52684_neg_SWATH.mzXML'
+    # features = pd.read_csv('Example/CS52684_neg_SWATH.features.csv')
+    mod = load_model('Model/DeepDIA_Model.h5')
+    peaks = parser_mzxml(file)
+    all_exid, all_frag_mz, all_frag_abund = [], [], []
+    all_precursor_eics, all_fragment_eics = [], []
+    
+    for i in tqdm(features.index):
+        exid = features.iloc[i, 0]
+        exrt = features['rt'][i]
+        exmz = features['mz'][i]
+        exeic = extract_eic(peaks, exmz, exrt, rtlength=30)
+        
+        ms2 = get_ms2(peaks, exmz, exrt)
+        cid = np.where(np.logical_and(np.abs(exmz - ms2[0]) > 0, ms2[1] > noise))[0]
+        candidate_mz, candidate_abund = ms2[0][cid], ms2[1][cid]
+        if len(candidate_mz) < 1:
+            continue
+        for j in range(len(candidate_mz)):
+            fragmz = candidate_mz[j]
+            fragabund = candidate_abund[j]
+            frageic = fragment_eic(peaks, exmz, exrt, fragmz, rtlength=35)
+            
+            std_rt = np.linspace(exeic[0][0], exeic[0][-1], 50)
+            std_ex = np.interp(std_rt, exeic[0], exeic[1])
+            std_fg = np.interp(std_rt, frageic[0], frageic[1])
+            
+            all_exid.append(exid)
+            all_frag_mz.append(fragmz)
+            all_frag_abund.append(fragabund)
+            all_precursor_eics.append(std_ex)
+            all_fragment_eics.append(std_fg)
+        
