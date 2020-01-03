@@ -10,13 +10,15 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from tensorflow.keras.models import load_model
+from sklearn.preprocessing import normalize
 from DeepDIA.utils import parser_mzxml, extract_eic, fragment_eic, get_ms2
 
 def DeepDIA_process(file, features, noise=200):
     # file = 'Example/CS52684_neg_SWATH.mzXML'
     # features = pd.read_csv('Example/CS52684_neg_SWATH.features.csv')
-    # mod = load_model('Model/DeepDIA_Model.h5')
+    mod = load_model('Model/DeepDIA_Model.h5')
     peaks = parser_mzxml(file)
+    all_precursor_mz, all_precursor_rt = [], []
     all_exid, all_frag_mz, all_frag_abund = [], [], []
     all_precursor_eics, all_fragment_eics = [], []
     
@@ -48,7 +50,26 @@ def DeepDIA_process(file, features, noise=200):
             std_fg = np.interp(std_rt, frageic[0], frageic[1])
             
             all_exid.append(exid)
+            all_precursor_mz.append(exmz)
+            all_precursor_rt.append(exrt)
             all_frag_mz.append(fragmz)
             all_frag_abund.append(fragabund)
             all_precursor_eics.append(std_ex)
             all_fragment_eics.append(std_fg)
+    X1 = np.asarray(all_precursor_eics)
+    X2 = np.asarray(all_fragment_eics)
+    
+    X1 = normalize(X1, axis=1, norm='max')
+    X2 = normalize(X2, axis=1, norm='max')
+    X1 = np.expand_dims(X1,-1)
+    X2 = np.expand_dims(X2,-1)
+    
+    prediction = mod.predict([X1, X2])
+    pos = np.where(prediction[:,0] > 0.5)[0]
+    # plt.plot(all_precursor_eics[pos[21]])
+    # plt.plot(all_fragment_eics[pos[21]])
+    output = pd.DataFrame({'exid': np.asarray(all_exid)[pos], 'precursor_mz': np.asarray(all_precursor_mz)[pos], 
+                           'precursor_rt': np.asarray(all_precursor_rt)[pos], 'mz': np.asarray(all_frag_mz)[pos],
+                           'intensity': np.asarray(all_frag_abund)[pos]})
+    return output
+        
