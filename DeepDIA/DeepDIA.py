@@ -13,7 +13,7 @@ from tensorflow.keras.models import load_model
 from sklearn.preprocessing import normalize
 from DeepDIA.utils import parser_mzxml, extract_eic, fragment_eic, get_ms2
 
-def DeepDIA_process(file, features, output_path, noise=200):
+def DeepDIA_process(file, features, noise=200):
     # file = 'Example/CS52684_neg_SWATH.mzXML'
     # features = pd.read_csv('Example/CS52684_neg_SWATH.features.csv')
     # output_path = 'Example/CS52684_neg_IDA_SWATH.ms2.csv'
@@ -25,8 +25,8 @@ def DeepDIA_process(file, features, output_path, noise=200):
     precursors = np.unique([p.getPrecursors()[0].getMZ() for p in peaks2])
     del(peaks)
     
-    # output = pd.DataFrame(columns = ['exid', 'precursor_mz', 'precursor_rt', 'mz', 'intensity'])
-    output = open (output_path, 'a+')
+    output = pd.DataFrame(columns = ['exid', 'precursor_mz', 'precursor_rt', 'mz', 'intensity'])
+    # output = open (output_path, 'a+')
     for i in tqdm(range(len(features.index))):
         exid = features.index[i]
         exrt = features['rt'][exid]
@@ -74,8 +74,8 @@ def DeepDIA_process(file, features, output_path, noise=200):
         temp_frag_abund = np.asarray(temp_frag_abund)[pos]
         temp_output = pd.DataFrame({'exid': exid, 'precursor_mz': exmz, 'precursor_rt': exrt, 
                                     'mz': temp_frag_mz, 'intensity': temp_frag_abund})
-        # output = output.append(temp_output)
-        output.write(str(temp_output))
-    output.close()
-    return pd.read_csv(output_path, index_col=0)
+        output = output.append(temp_output)
+        # output.write(str(temp_output))
+    # output.close()
+    return output
         
