@@ -65,7 +65,7 @@ def DeepDIA_process(file, features, noise=200):
     X2 = np.expand_dims(X2,-1)
     
     prediction = mod.predict([X1, X2])
-    pos = np.where(prediction[:,0] > 0.5)[0]
+    pos = np.where(prediction[:,1] > 0.5)[0]
     # plt.plot(all_precursor_eics[pos[21]])
     # plt.plot(all_fragment_eics[pos[21]])
     output = pd.DataFrame({'exid': np.asarray(all_exid)[pos], 'precursor_mz': np.asarray(all_precursor_mz)[pos], 

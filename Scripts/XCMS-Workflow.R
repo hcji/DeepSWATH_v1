@@ -7,7 +7,7 @@ xcms_process <- function(dir){
   
   for (f in files){
     o <- stringr::str_replace(f, '.mzXML', '.ms2.csv')
-    if (o in exist){
+    if (o %in% exist){
       next
     }
     

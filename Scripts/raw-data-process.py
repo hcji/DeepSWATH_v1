@@ -45,7 +45,9 @@ if __name__ == '__main__':
             frags = frags[frags['precursor_mz']==exmz]
             
             ms2 = get_ms2(peaks2, precursors, exmz, exrt)
-            decoy_mzs = [m for m in ms2[0] if np.min(np.abs(m - frags['mz'])) > 5]
+            cid = np.where(np.logical_and(np.abs(exmz - ms2[0]) > 0, ms2[1] > 200))[0]
+            candidate_mz, candidate_abund = ms2[0][cid], ms2[1][cid]
+            decoy_mzs = [m for m in candidate_mz if np.min(np.abs(m - frags['mz'])) > 5]
             exeic = extract_eic(peaks1, exmz, exrt, rtlength=30)
             # plt.plot(exeic[0], exeic[1])
             

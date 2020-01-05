@@ -49,9 +49,9 @@ def fragment_eic(peaks, precursors, exmz, exrt, fragmz, mztol=0.05, rtlength=30)
     mzrange = [fragmz - mztol, fragmz + mztol]
     rtrange = [exrt - rtlength, exrt + rtlength]    
     for p in peaks:
+        if p.getRT() > rtrange[1]:
+            break
         if (p.getRT() >= rtrange[0]) and (p.getMSLevel()==2):
-            if p.getRT() > rtrange[1]:
-                break
             if p.getPrecursors()[0].getMZ() == precursor:
                 rts.append(p.getRT())
                 mzs, intensities = p.get_peaks()
