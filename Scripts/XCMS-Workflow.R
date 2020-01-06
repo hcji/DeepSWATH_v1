@@ -13,7 +13,7 @@ xcms_process <- function(dir){
     
     dda_data <- readMSData(f, mode = "onDisk")
     
-    cwp <- CentWaveParam(snthresh = 5, noise = 50, ppm = 30, peakwidth = c(5, 60))
+    cwp <- CentWaveParam(snthresh = 10, noise = 200, ppm = 30, peakwidth = c(5, 60))
     dda_data <- findChromPeaks(dda_data, param = cwp)
     dda_spectra <- chromPeakSpectra(dda_data)
     
@@ -23,6 +23,7 @@ xcms_process <- function(dir){
     for (id in ex_id){
       ex_mz <- peaks[id, 'mz']
       ex_rt <- peaks[id, 'rt']
+      ex_int <- peaks[id, 'maxo']
       ex_spectra <- dda_spectra[mcols(dda_spectra)$peak_id == id]
       ex_spectrum <- combineSpectra(ex_spectra, method = consensusSpectrum, mzd = 0,
                                     ppm = 30, minProp = 0.8, weighted = FALSE,
@@ -30,10 +31,14 @@ xcms_process <- function(dir){
       if (length(ex_spectrum) == 0 || length(mz(ex_spectrum)[[1]]) == 0){
         next
       }
-      ms2 <- cbind(ex_mz, ex_rt, mz(ex_spectrum)[[1]], intensity(ex_spectrum)[[1]])
+      frag_mz = mz(ex_spectrum)[[1]]
+      frag_abund = intensity(ex_spectrum)[[1]]
+      frag_mz = frag_mz[frag_abund >= max(frag_abund)*0.01]
+      frag_abund = frag_abund[frag_abund >= max(frag_abund)*0.01]
+      ms2 <- cbind(ex_mz, ex_rt, ex_int, frag_mz, frag_abund)
       all_ms2 <- rbind(all_ms2, ms2)
     }
-    colnames(all_ms2) <- c('precursor_mz', 'precursor_rt', 'mz', 'intensity')
+    colnames(all_ms2) <- c('precursor_mz', 'precursor_rt', 'precursor_intensity', 'mz', 'intensity')
     write.csv(all_ms2, o)
     print(paste(f, 'finished'))
   }
