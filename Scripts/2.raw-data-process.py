@@ -53,9 +53,11 @@ if __name__ == '__main__':
             
             for j in frags.index:
                 fragmz = frags['mz'][j]
-                abund = frags['intensity'][j]
+                if np.min(np.abs(fragmz - frags['mz'])) > 0.05:
+                    continue
                 
-                if abund < 50:
+                abund = frags['intensity'][j]
+                if abund < 100:
                     continue
                 
                 if len(decoy_mzs) > 0:

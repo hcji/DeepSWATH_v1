@@ -46,5 +46,5 @@ xcms_process <- function(dir, replace=TRUE){
   }
 }
 
-xcms_process('E:/project/MetaboDIA_data/CS')
-xcms_process('E:/project/MetaboDIA_data/PH')
+xcms_process('D:/MetaboDIA_data/CS')
+xcms_process('D:/MetaboDIA_data/PH')
