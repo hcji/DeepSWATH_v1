@@ -1,16 +1,15 @@
 # xcms version 3.8.1
 library(xcms)
 
-xcms_process <- function(dir){
+xcms_process <- function(dir, replace=TRUE){
   files <- list.files(dir, pattern = '*_IDA.mzXML', full.names = TRUE)
-  exist <- list.files(dir, pattern = '*_ms2.csv', full.names = TRUE)
+  exist <- list.files(dir, pattern = '*.ms2.csv', full.names = TRUE)
   
   for (f in files){
     o <- stringr::str_replace(f, '.mzXML', '.ms2.csv')
-    if (o %in% exist){
+    if (!replace && o %in% exist){
       next
     }
-    
     dda_data <- readMSData(f, mode = "onDisk")
     
     cwp <- CentWaveParam(snthresh = 10, noise = 200, ppm = 30, peakwidth = c(5, 60))
@@ -33,8 +32,11 @@ xcms_process <- function(dir){
       }
       frag_mz = mz(ex_spectrum)[[1]]
       frag_abund = intensity(ex_spectrum)[[1]]
-      frag_mz = frag_mz[frag_abund >= max(frag_abund)*0.01]
-      frag_abund = frag_abund[frag_abund >= max(frag_abund)*0.01]
+      frag_mz = frag_mz[frag_abund >= 100]
+      frag_abund = frag_abund[frag_abund >= 100]
+      if (length(frag_mz) == 0){
+        next
+      }
       ms2 <- cbind(ex_mz, ex_rt, ex_int, frag_mz, frag_abund)
       all_ms2 <- rbind(all_ms2, ms2)
     }
@@ -44,5 +46,5 @@ xcms_process <- function(dir){
   }
 }
 
-xcms_process('D:/MetaboDIA_data/CS')
-xcms_process('D:/MetaboDIA_data/PH')
+xcms_process('E:/project/MetaboDIA_data/CS')
+xcms_process('E:/project/MetaboDIA_data/PH')

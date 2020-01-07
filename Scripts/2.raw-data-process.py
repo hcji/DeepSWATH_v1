@@ -17,7 +17,7 @@ if __name__ == '__main__':
     from tqdm import tqdm
     
     files = os.listdir('D:/MetaboDIA_data/CS')
-    swath = [f for f in files if 'pos_SWATH.mzXML' in f]
+    swath = [f for f in files if 'SWATH.mzXML' in f]
     
     all_precursor_eics = []
     all_fragment_eics = []
