@@ -2,5 +2,6 @@
 *.pyc
 /.spyproject
 /__pycache__
+/Evaluation
 *.npy
 *.csv

@@ -25,12 +25,13 @@ def DeepDIA_process(file, features, noise=200):
     precursors = np.unique([p.getPrecursors()[0].getMZ() for p in peaks2])
     del(peaks)
     
-    output = pd.DataFrame(columns = ['exid', 'precursor_mz', 'precursor_rt', 'mz', 'intensity'])
+    output = pd.DataFrame(columns = ['exid', 'precursor_mz', 'precursor_rt', 'precursor_intensity', 'mz', 'intensity'])
     # output = open (output_path, 'a+')
     for i in tqdm(range(len(features.index))):
         exid = features.index[i]
         exrt = features['rt'][exid]
         exmz = features['mz'][exid]
+        exint = features['intensity'][exid]
         exeic = extract_eic(peaks1, exmz, exrt, rtlength=30)
         # plt.plot(exeic[0], exeic[1])
         
@@ -72,7 +73,7 @@ def DeepDIA_process(file, features, noise=200):
         # plt.plot(all_fragment_eics[pos[21]])
         temp_frag_mz = np.asarray(temp_frag_mz)[pos]
         temp_frag_abund = np.asarray(temp_frag_abund)[pos]
-        temp_output = pd.DataFrame({'exid': exid, 'precursor_mz': exmz, 'precursor_rt': exrt, 
+        temp_output = pd.DataFrame({'exid': exid, 'precursor_mz': exmz, 'precursor_rt': exrt, 'precursor_intensity': exint,
                                     'mz': temp_frag_mz, 'intensity': temp_frag_abund})
         output = output.append(temp_output)
         # output.write(str(temp_output))
