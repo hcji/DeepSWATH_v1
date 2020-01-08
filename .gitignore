@@ -2,4 +2,5 @@
 *.pyc
 /.spyproject
 /__pycache__
-/Data/
+*.npy
+*.csv

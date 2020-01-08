@@ -109,7 +109,7 @@ if __name__ == '__main__':
     # train test split
     inds = np.arange(len(Y))
     np.random.shuffle(inds)
-    n = int(len(Y) * 0.8)
+    n = int(len(Y) * 0.9)
     tr, ts = inds[:n], inds[n:]
 
     X1_tr, X1_ts = X1[tr], X1[ts]
