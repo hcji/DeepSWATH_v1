@@ -45,7 +45,9 @@ if __name__ == '__main__':
             frags = frags[frags['precursor_mz']==exmz]
             
             ms2 = get_ms2(peaks2, precursors, exmz, exrt)
-            cid = np.where(np.logical_and(np.abs(exmz - ms2[0]) > 0, ms2[1] > 200))[0]
+            cid = np.where(np.logical_and(np.abs(exmz - ms2[0]) > 0, ms2[1] > 100))[0]
+            if len(cid) == 0:
+                continue
             candidate_mz, candidate_abund = ms2[0][cid], ms2[1][cid]
             decoy_mzs = [m for m in candidate_mz if np.min(np.abs(m - frags['mz'])) > 5]
             exeic = extract_eic(peaks1, exmz, exrt, rtlength=30)
@@ -53,7 +55,7 @@ if __name__ == '__main__':
             
             for j in frags.index:
                 fragmz = frags['mz'][j]
-                if np.min(np.abs(fragmz - frags['mz'])) > 0.05:
+                if np.min(np.abs(fragmz - candidate_mz)) > 0.05:
                     continue
                 
                 abund = frags['intensity'][j]
