@@ -46,3 +46,12 @@ def DDA_DIA_compare(f_dda, f_deepdia, f_msdial, mztol=0.01, rttol=10):
         deepdia_corr = pearsonr(dda_int, deepdia_int)[0]
         msdial_corr = pearsonr(dda_int, msdial_int)[0]
         output.loc[i] = [f['precursor_mz'], f['precursor_rt'], f['precursor_intensity'], deepdia_corr, msdial_corr]
+        
+        
+if __name__ == '__main__':
+    
+    import os
+    
+    msdial_dir = os.listdir('D:/MetaboDIA_data/MS-DIAL Result')
+    
+    
