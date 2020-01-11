@@ -13,7 +13,7 @@ from tensorflow.keras.models import load_model
 from sklearn.preprocessing import normalize
 from DeepDIA.utils import parser_mzxml, extract_eic, fragment_eic, get_ms2
 
-def DeepDIA_process(file, features, noise=200):
+def DeepDIA_process(file, features, noise=100):
     # file = 'Example/CS52684_neg_SWATH.mzXML'
     # features = pd.read_csv('Example/CS52684_neg_SWATH.features.csv')
     # output_path = 'Example/CS52684_neg_IDA_SWATH.ms2.csv'
