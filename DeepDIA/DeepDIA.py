@@ -15,8 +15,9 @@ from DeepDIA.utils import parser_mzxml, extract_eic, fragment_eic, get_ms2
 
 def DeepDIA_process(file, features, noise=100):
     # file = 'Example/CS52684_neg_SWATH.mzXML'
-    # features = pd.read_csv('Example/CS52684_neg_SWATH.features.csv')
-    # output_path = 'Example/CS52684_neg_IDA_SWATH.ms2.csv'
+    # dda_result = pd.read_csv('Example/CS52684_neg_IDA.ms2.csv')
+    # features = features.drop_duplicates()
+    # features.columns = ['mz', 'rt', 'intensity']
     mod = load_model('Model/DeepDIA_Model.h5')
     peaks = parser_mzxml(file)
     
