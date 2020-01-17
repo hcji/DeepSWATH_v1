@@ -112,3 +112,27 @@ def get_ms2(peaks, precursors, exmz, exrt):
                 ms2 = p.get_peaks()
                 nearest = abs(exrt - p.getRT())
     return ms2
+
+
+def dda_dia_compare(dda_result, dia_result, mztol=0.01, rttol=5):
+    features = dda_result[['precursor_mz', 'precursor_rt', 'precursor_intensity']]
+    features = features.drop_duplicates()
+    output = pd.DataFrame(columns=['precursor_mz', 'precursor_rt', 'precursor_intensity', 'mz', 'dda_intensity', 'dia_intensity'])
+    for i in range(features.shape[0]):
+        f = features.iloc[i,:]
+        dda = dda_result[ np.abs(dda_result['precursor_mz'] - f['precursor_mz']) < mztol ]
+        dda = dda[ np.abs(dda['precursor_rt'] - f['precursor_rt']) < rttol ]
+        dia = dia_result[ np.abs(dia_result['precursor_mz'] - f['precursor_mz']) < mztol ]
+        dia = dia[ np.abs(dia['precursor_rt'] - f['precursor_rt']) < rttol ]
+        mzs = list(set( list(np.round(dda['mz'], 2)) + list( np.round(dia['mz'], 2)) ))
+        dda_int, dia_int = [], []
+        for mz in mzs:
+            dda_int.append(np.sum(dda['intensity'][ np.abs(dda['mz'] - mz) < 0.01 ]))
+            dia_int.append(np.sum(dia['intensity'][ np.abs(dia['mz'] - mz) < 0.01 ]))
+        resi = pd.DataFrame({'precursor_mz': f['precursor_mz'], 'precursor_rt': f['precursor_rt'], 'precursor_intensity': f['precursor_intensity'],
+                             'mz': mzs, 'dda_intensity': dda_int, 'dia_intensity': dia_int})
+        output = output.append(resi)
+    return output
+        
+    
+
