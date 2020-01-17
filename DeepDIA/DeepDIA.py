@@ -11,14 +11,19 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from tensorflow.keras.models import load_model
 from sklearn.preprocessing import normalize
-from DeepDIA.utils import parser_mzxml, extract_eic, fragment_eic, get_ms2
+from DeepDIA.utils import parser_mzxml, parser_mzml, extract_eic, fragment_eic, get_ms2
 
 def DeepDIA_process(file, features, noise=200):
     # file = 'Example/CS52684_neg_SWATH.mzXML'
     # features = pd.read_csv('Example/CS52684_neg_SWATH.features.csv')
     # output_path = 'Example/CS52684_neg_IDA_SWATH.ms2.csv'
     mod = load_model('Model/DeepDIA_Model.h5')
-    peaks = parser_mzxml(file)
+    if file.split('.')[-1] == 'mzXML':
+        peaks = parser_mzxml(file)
+    elif file.split('.')[-1] == 'mzML':
+        peaks = parser_mzml(file)
+    else:
+        raise IOError ('invalid input file')
     
     peaks1 = [p for p in peaks if p.getMSLevel()==1]
     peaks2 = [p for p in peaks if p.getMSLevel()==2]
