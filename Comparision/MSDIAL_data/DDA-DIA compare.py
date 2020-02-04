@@ -11,7 +11,7 @@ from tqdm import tqdm
 from scipy.stats import pearsonr
 
 
-def DDA_DIA_compare(f_dda, f_deepdia, f_msdial, mztol=0.05, rttol=20):
+def DDA_DIA_compare(f_dda, f_deepdia, f_msdial, mztol=0.01, rttol=30):
     dda_res = pd.read_csv(f_dda)
     deepdia_res = pd.read_csv(f_deepdia)
     msdial_res = pd.read_csv(f_msdial)
