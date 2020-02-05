@@ -3,8 +3,10 @@
 /.spyproject
 /__pycache__
 /Evaluation
+/Comparision/MetaboDIA_data/data/
+/Comparision/MSDIAL_data/data/
+/Comparision/MetDIA_data/data/
+/Comparision/MetaboDIA_data/results/
+/Comparision/MSDIAL_data/results/
+/Comparision/MetDIA_data/results/
 *.npy
-*.csv
-*.abf
-*.mzML
-*.txt

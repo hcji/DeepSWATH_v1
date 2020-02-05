@@ -25,11 +25,15 @@ def parser_msdial(file, output):
 
 if __name__ == '__main__':
     
-    import os
-    from tqdm import tqdm
+    # MetaboDIA data
+    metabodia_dda_pos = 'Comparision/MetaboDIA_Data/results/PH697097_pos_IDA.mgf'
+    metabodia_dda_neg = 'Comparision/MetaboDIA_Data/results/PH697097_neg_IDA.mgf'
+    parser_msdial(metabodia_dda_pos, 'Comparision/MetaboDIA_Data/results/PH697097_pos_IDA.csv')
+    parser_msdial(metabodia_dda_neg, 'Comparision/MetaboDIA_Data/results/PH697097_neg_IDA.csv')
     
-    Dir = 'E:/project/MetaboDIA_data/MS-DIAL Result'
-    for f in tqdm(os.listdir(Dir)):
-        f = 'E:/project/MetaboDIA_data/MS-DIAL Result/' + f
-        o = f.replace('.mgf', '.csv')
-        parser_msdial(f, o)
+    # MSDIAL data
+    msdial_dda_pos = 'Comparision/MSDIAL_Data/results/Posi_Ida_QC_1_1.mgf'
+    msdial_dda_neg = 'Comparision/MSDIAL_Data/results/Nega_Ida_QC_1_1.mgf'
+    parser_msdial(metabodia_dda_pos, 'Comparision/MSDIAL_Data/results/Posi_Ida_QC_1_1.csv')
+    parser_msdial(metabodia_dda_neg, 'Comparision/MSDIAL_Data/results/Nega_Ida_QC_1_1.csv')
+    
