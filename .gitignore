@@ -5,3 +5,6 @@
 /Evaluation
 *.npy
 *.csv
+*.abf
+*.mzML
+*.txt
