@@ -28,7 +28,7 @@ def DeepDIA_process(file, features, noise=100):
     
     peaks1 = [p for p in peaks if p.getMSLevel()==1]
     peaks2 = [p for p in peaks if p.getMSLevel()==2]
-    precursors = np.unique([p.getPrecursors()[0].getMZ() for p in peaks2])
+    precursors = [p.getPrecursors()[0].getMZ() for p in peaks2]
     del(peaks)
     
     output = pd.DataFrame(columns = ['exid', 'precursor_mz', 'precursor_rt', 'precursor_intensity', 'mz', 'intensity'])

@@ -44,7 +44,7 @@ def extract_eic(peaks, mz, rt, mztol=0.05, rtlength=30):
 
 
 def fragment_eic(peaks, precursors, exmz, exrt, fragmz, mztol=0.05, rtlength=30):
-    precursor = precursors[np.argmin(np.abs(precursors - exmz))]
+    diff = (precursors[2] - precursors[1]) / 2
     rts, abunds = [], []
     mzrange = [fragmz - mztol, fragmz + mztol]
     rtrange = [exrt - rtlength, exrt + rtlength]    
@@ -52,7 +52,7 @@ def fragment_eic(peaks, precursors, exmz, exrt, fragmz, mztol=0.05, rtlength=30)
         if p.getRT() > rtrange[1]:
             break
         if (p.getRT() >= rtrange[0]) and (p.getMSLevel()==2):
-            if p.getPrecursors()[0].getMZ() == precursor:
+            if abs(p.getPrecursors()[0].getMZ() - exmz) < diff:
                 rts.append(p.getRT())
                 mzs, intensities = p.get_peaks()
                 sel_peaks = np.arange(bisect_left(mzs, mzrange[0]), bisect_right(mzs, mzrange[1]))
