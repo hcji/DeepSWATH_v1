@@ -51,7 +51,36 @@ def get_str_for_venn(ms2):
     return set(v)
 
 
-def DDA_DIA_compare(f_dda, f_deepdia, f_msdial, mztol=0.01, rttol=30):
+def DB_DIA_compare(db, f_deepdia, f_msdial, mztol=0.05):
+    db_res = pd.read_csv(db)
+    deepdia_res = pd.read_csv(f_deepdia)
+    msdial_res = pd.read_csv(f_msdial)
+    
+    features = db_res[['Name', 'PrecursorMz']]
+    features = features.drop_duplicates()
+    
+    output = pd.DataFrame(columns=['Name', 'precursor_mz', 'precursor_intensity', 'DeepDIA_corr', 'MSDIAL_corr'])
+    for i in tqdm(range(features.shape[0])):
+        f = features.iloc[i,:]
+        standard = db_res[db_res['PrecursorMz'] == f['PrecursorMz']]
+        deepdia = deepdia_res[ np.abs(deepdia_res['precursor_mz'] - f['PrecursorMz']) < mztol]
+        msdial = msdial_res[ np.abs(msdial_res['precursor_mz'] - f['PrecursorMz']) < mztol]
+        precursor_intensity = np.mean(deepdia['precursor_intensity'])
+        
+        mzs = standard['ProductMz']
+        std_int = np.array(standard['LibraryIntensity'])
+        deepdia_int, msdial_int = [], []
+        for mz in mzs:
+            deepdia_int.append(np.sum(deepdia['intensity'][ np.abs(deepdia['mz'] - mz) < 0.1 ]))
+            msdial_int.append(np.sum(msdial['intensity'][ np.abs(msdial['mz'] - mz) < 0.1 ]))
+        deepdia_corr = np.nanmax([0, pearsonr(std_int, deepdia_int)[0]])
+        msdial_corr = np.nanmax([0, pearsonr(std_int, msdial_int)[0]])
+        output.loc[i] = [f['Name'], f['PrecursorMz'], precursor_intensity, deepdia_corr, msdial_corr]
+    return output
+        
+
+
+def DDA_DIA_compare(f_dda, f_deepdia, f_msdial, mztol=0.05, rttol=30):
     dda_res = pd.read_csv(f_dda)
     deepdia_res = pd.read_csv(f_deepdia)
     msdial_res = pd.read_csv(f_msdial)
@@ -71,7 +100,7 @@ def DDA_DIA_compare(f_dda, f_deepdia, f_msdial, mztol=0.01, rttol=30):
         msdial = msdial_res[ np.abs(msdial_res['precursor_mz'] - f['precursor_mz']) < mztol ]
         msdial = msdial[ np.abs(msdial['precursor_rt'] - f['precursor_rt']) < rttol ]
 
-        mzs = list(set( list(np.round(dda['mz'], 1)) + list(np.round(msdial['mz'], 1)) + list(np.round(deepdia['mz'], 1)) ))
+        mzs = list(set( list(np.round(dda['mz'], 2)) + list(np.round(msdial['mz'], 2)) + list(np.round(deepdia['mz'], 2)) ))
         if len(mzs) < 3:
             continue
         
@@ -89,27 +118,40 @@ def DDA_DIA_compare(f_dda, f_deepdia, f_msdial, mztol=0.01, rttol=30):
 if __name__ == '__main__':
     
     import matplotlib.pyplot as plt
-    import matplotlib.patches as mpatches
     
-    p_dda_msdial = 'Comparision/MetaboDIA_Data/results/DDA_results/MS_DIAL_PH697097_pos_IDA.csv'
-    p_dda_xcms = 'Comparision/MetaboDIA_Data/results/DDA_results/XCMS_PH697097_pos_IDA.csv'
-    n_dda_msdial = 'Comparision/MetaboDIA_Data/results/DDA_results/MS_DIAL_PH697097_neg_IDA.csv'
-    n_dda_xcms = 'Comparision/MetaboDIA_Data/results/DDA_results/XCMS_PH697097_neg_IDA.csv'
-    p_dda_consensus = get_dda_consensus(p_dda_xcms, p_dda_msdial)
-    n_dda_consensus = get_dda_consensus(n_dda_xcms, n_dda_msdial)
-    p_dda_consensus.to_csv('Comparision/MetaboDIA_data/results/DDA_results/PH697097_pos_IDA.ms2.csv')
-    n_dda_consensus.to_csv('Comparision/MetaboDIA_data/results/DDA_results/PH697097_neg_IDA.ms2.csv')
+    # MetDIA Comparision
+    db = 'Comparision/MetDIA_data/results/30STD_Database.csv'
+    f_deepdia = 'Comparision/MetDIA_data/results/30STD_mix_330ppb_1_DeepDIA.csv'
+    f_msdial = 'Comparision/MetDIA_data/results/30STD_mix_330ppb_1_MSDIAL.csv'
+    metdia = DB_DIA_compare(db, f_deepdia, f_msdial, mztol=0.05)
     
-    p_dda = 'Comparision/MetaboDIA_data/results/DDA_results/PH697097_pos_IDA.ms2.csv'
-    n_dda = 'Comparision/MetaboDIA_data/results/DDA_results/PH697097_neg_IDA.ms2.csv'
-    p_deepdia = 'Comparision/MetaboDIA_data/results/DeepDIA_results/PH697097_pos_SWATH.ms2.csv'
-    n_deepdia = 'Comparision/MetaboDIA_data/results/DeepDIA_results/PH697097_neg_SWATH.ms2.csv'
-    p_msdial = 'Comparision/MetaboDIA_data/results/MSDIAL_results/PH697097_pos_SWATH.csv'
-    n_msdial = 'Comparision/MetaboDIA_data/results/MSDIAL_results/PH697097_neg_SWATH.csv'
+    # MetaboDIA Comparision
+    p_dda = 'Comparision/MetaboDIA_data/results/PH697097_pos_IDA.csv'
+    n_dda = 'Comparision/MetaboDIA_data/results/PH697097_neg_IDA.csv'
+    p_deepdia = 'Comparision/MetaboDIA_data/results/PH697097_pos_DeepDIA.csv'
+    n_deepdia = 'Comparision/MetaboDIA_data/results/PH697097_neg_DeepDIA.csv'
+    p_msdial = 'Comparision/MetaboDIA_data/results/PH697097_pos_MSDIAL.csv'
+    n_msdial = 'Comparision/MetaboDIA_data/results/PH697097_neg_MSDIAL.csv'
     
-    p_dda_dia = DDA_DIA_compare(p_dda, p_deepdia, p_msdial)
-    n_dda_dia = DDA_DIA_compare(n_dda, n_deepdia, n_msdial)
+    p_metabodia = DDA_DIA_compare(p_dda, p_deepdia, p_msdial)
+    n_metabodia = DDA_DIA_compare(n_dda, n_deepdia, n_msdial)
     
+    # MSDIAL Comparision
+    pp_dda = 'Comparision/MSDIAL_data/results/Posi_Ida_QC_1_1.csv'
+    nn_dda = 'Comparision/MSDIAL_data/results/Posi_Ida_QC_1_1.csv'
+    pp_deepdia = 'Comparision/MSDIAL_data/results/Posi_DeepDIA_QC_1_1.csv'
+    nn_deepdia = 'Comparision/MSDIAL_data/results/Nega_DeepDIA_QC_1_1.csv'
+    pp_msdial = 'Comparision/MSDIAL_data/results/Posi_MSDIAL_QC_1_1.csv'
+    nn_msdial = 'Comparision/MSDIAL_data/results/Nega_MSDIAL_QC_1_1.csv'
+    
+    pp_msdiald = DDA_DIA_compare(pp_dda, pp_deepdia, pp_msdial)
+    nn_msdiald = DDA_DIA_compare(nn_dda, nn_deepdia, nn_msdial)
+    
+    # Correlation Violin Plot
+    fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(12, 8))
+    
+    
+    ##############################################################################################
     num_p_dda, num_n_dda = count_features(p_dda), count_features(n_dda)
     num_p_deepdia, num_n_deepdia = count_features(p_deepdia), count_features(n_deepdia)
     num_p_msdial, num_n_msdial = count_features(p_msdial), count_features(n_msdial)
