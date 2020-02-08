@@ -14,9 +14,9 @@ from sklearn.preprocessing import normalize
 from DeepDIA.utils import parser_mzxml, parser_mzml, extract_eic, fragment_eic, get_ms2
 
 def DeepDIA_process(file, features, noise=100):
-    # file = 'Example/CS52684_neg_SWATH.mzXML'
-    # dda_result = pd.read_csv('Example/CS52684_neg_IDA.ms2.csv')
-    # features = features.drop_duplicates()
+    # file = 'Comparision/MetDIA_Data/30STD_mix 330ppb-1.mzML'
+    # features = pd.read_csv('Comparision/MetDIA_data/results/xcms_ms1_feature.csv')
+    # features = features[['mz', 'rt', 'maxo']]
     # features.columns = ['mz', 'rt', 'intensity']
     mod = load_model('Model/DeepDIA_Model.h5')
     if file.split('.')[-1] == 'mzXML':

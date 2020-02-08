@@ -11,30 +11,6 @@ from scipy.stats import pearsonr
 from tqdm import tqdm
 
 
-def get_dda_consensus(dda_xcms, dda_msdial):
-    xcms = pd.read_csv(dda_xcms)
-    msdial = pd.read_csv(dda_msdial)
-    xcms_fet = xcms[['precursor_mz', 'precursor_rt', 'precursor_intensity']].drop_duplicates()
-    msdial_fet = msdial[['precursor_mz', 'precursor_rt', 'precursor_intensity']].drop_duplicates()
-    consensus_fet = pd.DataFrame(columns=xcms_fet.columns)
-    for i in xcms_fet.index:
-        pmz = xcms_fet['precursor_mz'][i]
-        prt = xcms_fet['precursor_rt'][i]
-        pint = xcms_fet['precursor_intensity'][i]
-        for j in msdial_fet.index:
-            if (abs(msdial_fet['precursor_mz'][j] - pmz) < 0.01) and (abs(msdial_fet['precursor_rt'][j] - prt) < 10):
-                consensus_fet.loc[len(consensus_fet)] = [pmz, prt, pint]
-    consensus = pd.DataFrame(columns=['precursor_mz', 'precursor_rt', 'precursor_intensity', 'mz', 'intensity'])
-    for i in consensus_fet.index:
-        pmz = consensus_fet['precursor_mz'][i]
-        prt = consensus_fet['precursor_rt'][i]
-        pint = consensus_fet['precursor_intensity'][i]
-        for j in xcms.index:
-            if (xcms['precursor_mz'][j] == pmz) and (xcms['precursor_rt'][j] == prt):
-                consensus.loc[len(consensus)] = [pmz, prt, pint, xcms['mz'][j], xcms['intensity'][j]]
-    return consensus         
-
-
 def count_features(ms2):
     features = pd.read_csv(ms2)
     features = features[['precursor_mz', 'precursor_rt', 'precursor_intensity']]
@@ -80,7 +56,7 @@ def DB_DIA_compare(db, f_deepdia, f_msdial, mztol=0.05):
         
 
 
-def DDA_DIA_compare(f_dda, f_deepdia, f_msdial, mztol=0.01, rttol=30):
+def DDA_DIA_compare(f_dda, f_deepdia, f_msdial, mztol=0.05, rttol=60):
     dda_res = pd.read_csv(f_dda)
     deepdia_res = pd.read_csv(f_deepdia)
     msdial_res = pd.read_csv(f_msdial)
@@ -143,8 +119,8 @@ if __name__ == '__main__':
     axes[0,0].set_xticklabels(['', 'DeepEI', 'MSDIAL', ''])
     axes[0,0].set_ylabel('Correlation')
       
-    axes[0,1].violinplot([list(p_metabodia['DeepDIA_corr']), list(p_metabodia['DeepDIA_corr'])], [1,5], showmeans=False, showmedians=True)
-    axes[0,1].violinplot([list(n_metabodia['MSDIAL_corr']), list(n_metabodia['MSDIAL_corr'])], [3,7], showmeans=False, showmedians=True)
+    axes[0,1].violinplot([list(p_metabodia['DeepDIA_corr']), list(n_metabodia['DeepDIA_corr'])], [1,5], showmeans=False, showmedians=True)
+    axes[0,1].violinplot([list(p_metabodia['MSDIAL_corr']), list(n_metabodia['MSDIAL_corr'])], [3,7], showmeans=False, showmedians=True)
     axes[0,1].set_xticks(range(8))
     axes[0,1].set_xticklabels(['', 'DeepDIA', '\nPositive', 'MSDIAL', '', 'DeepDIA', '\nNegative', 'MSDIAL'])
     axes[0,1].set_ylabel('Correlation')
@@ -181,5 +157,4 @@ if __name__ == '__main__':
     axes[1,1].legend()
     
     plt.show()
-    
     

@@ -64,15 +64,16 @@ class DIANet:
         mcp_save = ModelCheckpoint('Model/DeepDIA_Model.h5', save_best_only=True, monitor='val_loss', mode='min')
         reduce_lr_loss = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=3, verbose=1, epsilon=1e-4, mode='min')
         
-        self.model.fit([X1, X2], [Y], epochs=epochs, callbacks=[earlyStopping, mcp_save, reduce_lr_loss], validation_split=0.1)
-            
+        history = self.model.fit([X1, X2], [Y], epochs=epochs, callbacks=[earlyStopping, mcp_save, reduce_lr_loss], validation_split=0.1)
+        return history
+
 
 def plot_roc(y_pred, y_real, classes):
     fpr = dict()
     tpr = dict()
     roc_auc = dict()
     for i in range(2):
-        fpr[i], tpr[i], _ = roc_curve(y_pred[:, i], y_real[:, i], drop_intermediate=False)
+        fpr[i], tpr[i], _ = roc_curve(y_real[:, i], y_pred[:, i], drop_intermediate=False)
         roc_auc[i] = auc(fpr[i], tpr[i])
     '''
     fpr["micro"], tpr["micro"], _ = roc_curve(y_pred.ravel(), y_real.ravel())
@@ -117,19 +118,44 @@ if __name__ == '__main__':
     Y_tr, Y_ts = Y[tr], Y[ts]
     
     mod = DIANet(X1_tr, X2_tr, Y_tr)
-    mod.train(epochs=50)
+    history = mod.train(epochs=50)
     
     # evaluation
     mod = load_model('Model/DeepDIA_Model.h5')
     X1_ts = np.expand_dims(X1_ts,-1)
     X2_ts = np.expand_dims(X2_ts,-1)
     Y_pred = mod.predict([X1_ts, X2_ts])
-    Y_pred = np.round(Y_pred)
+    roc = roc_curve(Y_ts[:, 0], Y_pred[:, 0], drop_intermediate=False)
+    roc_auc = auc(roc[0], roc[1])
     
+    Y_pred = np.round(Y_pred)
     acc = accuracy_score(Y_ts[:,0], Y_pred[:,0])
     confusion = confusion_matrix(Y_ts[:,0], Y_pred[:,0])
-    plot_roc(Y_pred, Y_ts, classes=['fragment', 'decoy'])
     precision = precision_score(Y_ts[:,0], Y_pred[:,0])
     recall = recall_score(Y_ts[:,0], Y_pred[:,0])
     
+    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
+
+    axes[0,0].plot(history.history['loss'], alpha= 0.8)
+    axes[0,0].plot(history.history['val_loss'], alpha= 0.8)
+    axes[0,0].set_ylabel('loss')
+    axes[0,0].set_xlabel('epoch')
+    axes[0,0].legend(['train', 'valid'], loc="lower left")
+    
+    axes[0,1].plot(history.history['acc'], alpha= 0.8)
+    axes[0,1].plot(history.history['val_acc'], alpha= 0.8)
+    axes[0,1].set_ylabel('accuracy')
+    axes[0,1].set_xlabel('epoch')
+    axes[0,1].legend(['train', 'valid'], loc="lower right")
+    
+    axes[1,0].plot(history.history['lr'], color = 'green', alpha= 0.8)
+    axes[1,0].set_ylabel('learning rate')
+    axes[1,0].set_xlabel('epoch')
+    axes[1,0].legend(['learning rate'], loc="lower left")
+
+    axes[1,1].plot(roc[0], roc[1], color = 'red', alpha= 0.8)
+    axes[1,1].plot([0, 1], [0, 1], color = 'black', alpha= 0.8, linestyle='--')
+    axes[1,1].set_ylabel('true positive rate')
+    axes[1,1].set_xlabel('false negative rate')
+    axes[1,1].legend(['ROC curve (area = %0.2f)' % roc_auc[2]], loc="lower right")
     
