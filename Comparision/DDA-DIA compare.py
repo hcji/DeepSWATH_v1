@@ -80,7 +80,7 @@ def DB_DIA_compare(db, f_deepdia, f_msdial, mztol=0.05):
         
 
 
-def DDA_DIA_compare(f_dda, f_deepdia, f_msdial, mztol=0.05, rttol=30):
+def DDA_DIA_compare(f_dda, f_deepdia, f_msdial, mztol=0.01, rttol=30):
     dda_res = pd.read_csv(f_dda)
     deepdia_res = pd.read_csv(f_deepdia)
     msdial_res = pd.read_csv(f_msdial)
@@ -99,16 +99,15 @@ def DDA_DIA_compare(f_dda, f_deepdia, f_msdial, mztol=0.05, rttol=30):
         deepdia = deepdia[ np.abs(deepdia['precursor_rt'] - f['precursor_rt']) < rttol ]
         msdial = msdial_res[ np.abs(msdial_res['precursor_mz'] - f['precursor_mz']) < mztol ]
         msdial = msdial[ np.abs(msdial['precursor_rt'] - f['precursor_rt']) < rttol ]
-
-        mzs = list(set( list(np.round(dda['mz'], 2)) + list(np.round(msdial['mz'], 2)) + list(np.round(deepdia['mz'], 2)) ))
-        if len(mzs) < 3:
-            continue
         
+        if dda.shape[0] <= 3:
+            continue  
+        mzs = list(set( list(np.round(dda['mz'], 1)) + list(np.round(msdial['mz'], 1)) + list(np.round(deepdia['mz'], 1)) ))      
         dda_int, deepdia_int, msdial_int = [], [], []
         for mz in mzs:
-            dda_int.append(np.sum(dda['intensity'][ np.abs(dda['mz'] - mz) < 0.1 ]))
-            deepdia_int.append(np.sum(deepdia['intensity'][ np.abs(deepdia['mz'] - mz) < 0.1 ]))
-            msdial_int.append(np.sum(msdial['intensity'][ np.abs(msdial['mz'] - mz) < 0.1 ]))
+            dda_int.append(np.sum(dda['intensity'][ np.abs(dda['mz'] - mz) < 0.15 ]))
+            deepdia_int.append(np.sum(deepdia['intensity'][ np.abs(deepdia['mz'] - mz) < 0.15 ]))
+            msdial_int.append(np.sum(msdial['intensity'][ np.abs(msdial['mz'] - mz) < 0.15 ]))
         deepdia_corr = np.nanmax([0, pearsonr(dda_int, deepdia_int)[0]])
         msdial_corr = np.nanmax([0, pearsonr(dda_int, msdial_int)[0]])
         output.loc[i] = [f['precursor_mz'], f['precursor_rt'], f['precursor_intensity'], deepdia_corr, msdial_corr]
@@ -135,41 +134,19 @@ if __name__ == '__main__':
     
     p_metabodia = DDA_DIA_compare(p_dda, p_deepdia, p_msdial)
     n_metabodia = DDA_DIA_compare(n_dda, n_deepdia, n_msdial)
-    
-    # MSDIAL Comparision
-    pp_dda = 'Comparision/MSDIAL_data/results/Posi_Ida_QC_1_1.csv'
-    nn_dda = 'Comparision/MSDIAL_data/results/Posi_Ida_QC_1_1.csv'
-    pp_deepdia = 'Comparision/MSDIAL_data/results/Posi_DeepDIA_QC_1_1.csv'
-    nn_deepdia = 'Comparision/MSDIAL_data/results/Nega_DeepDIA_QC_1_1.csv'
-    pp_msdial = 'Comparision/MSDIAL_data/results/Posi_MSDIAL_QC_1_1.csv'
-    nn_msdial = 'Comparision/MSDIAL_data/results/Nega_MSDIAL_QC_1_1.csv'
-    
-    pp_msdiald = DDA_DIA_compare(pp_dda, pp_deepdia, pp_msdial)
-    nn_msdiald = DDA_DIA_compare(nn_dda, nn_deepdia, nn_msdial)
-    
+
     # Correlation Violin Plot
-    fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(12, 8))
-    
-    
-    ##############################################################################################
-    num_p_dda, num_n_dda = count_features(p_dda), count_features(n_dda)
-    num_p_deepdia, num_n_deepdia = count_features(p_deepdia), count_features(n_deepdia)
-    num_p_msdial, num_n_msdial = count_features(p_msdial), count_features(n_msdial)
-    
-    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
-        
-    axes[0,0].bar([1,5], [num_p_dda, num_n_dda], width=1, label='DDA', color='red', alpha=0.5)
-    axes[0,0].bar([2,6], [num_p_deepdia, num_n_deepdia], width=1, label='DeepDIA', alpha=0.5)
-    axes[0,0].bar([3,7], [num_p_msdial, num_n_msdial], width=1, label='MS-DIAL', alpha=0.5)
-    axes[0,0].set_xticklabels(['', '', 'Positive', '', '','','Negative'])
-    axes[0,0].set_yticks(np.arange(0,14001,2000))
-    axes[0,0].set_ylabel('Number')
-    axes[0,0].legend()
-    
-    axes[0,1].violinplot([list(p_dda_dia['DeepDIA_corr']), list(n_dda_dia['DeepDIA_corr'])], [1,5], showmeans=False, showmedians=True)
-    axes[0,1].violinplot([list(p_dda_dia['MSDIAL_corr']), list(n_dda_dia['MSDIAL_corr'])], [3,7], showmeans=False, showmedians=True)
+    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(12, 6))
+    axes[0,0].violinplot([list(metdia['DeepDIA_corr'])], [1], showmeans=False, showmedians=True)
+    axes[0,0].violinplot([list(metdia['MSDIAL_corr'])], [2], showmeans=False, showmedians=True)
+    axes[0,0].set_xticks(range(4))
+    axes[0,0].set_xticklabels(['', 'DeepEI', 'MSDIAL', ''])
+    axes[0,0].set_ylabel('Correlation')
+      
+    axes[0,1].violinplot([list(p_metabodia['DeepDIA_corr']), list(p_metabodia['DeepDIA_corr'])], [1,5], showmeans=False, showmedians=True)
+    axes[0,1].violinplot([list(n_metabodia['MSDIAL_corr']), list(n_metabodia['MSDIAL_corr'])], [3,7], showmeans=False, showmedians=True)
     axes[0,1].set_xticks(range(8))
-    axes[0,1].set_xticklabels(['', 'DeepEI', '\nPositive', 'MSDIAL', '', 'DeepEI', '\nNegative', 'MSDIAL'])
+    axes[0,1].set_xticklabels(['', 'DeepDIA', '\nPositive', 'MSDIAL', '', 'DeepDIA', '\nNegative', 'MSDIAL'])
     axes[0,1].set_ylabel('Correlation')
     
     exp_mz = 626.356

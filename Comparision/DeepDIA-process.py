@@ -30,18 +30,3 @@ features = features[['mz', 'rt', 'maxo']]
 features.columns = ['mz', 'rt', 'intensity']
 dia_result = DeepDIA_process(f, features)
 dia_result.to_csv('Comparision/MetaboDIA_data/results/PH697097_neg_DeepDIA.csv')
-
-# MSDIAL data process
-f = 'Comparision/MSDIAL_data/data/Posi_Swath_QC_1_1.mzML'
-features = pd.read_csv('Comparision/MSDIAL_data/results/xcms_ms1_feature_pos.csv')
-features = features[['mz', 'rt', 'maxo']]
-features.columns = ['mz', 'rt', 'intensity']
-dia_result = DeepDIA_process(f, features, noise=200)
-dia_result.to_csv('Comparision/MSDIAL_data/results/Posi_DeepDIA_QC_1_1.csv')
-
-f = 'Comparision/MSDIAL_data/data/Nega_Swath_QC_1_1.mzML'
-features = pd.read_csv('Comparision/MSDIAL_data/results/xcms_ms1_feature_neg.csv')
-features = features[['mz', 'rt', 'maxo']]
-features.columns = ['mz', 'rt', 'intensity']
-dia_result = DeepDIA_process(f, features, noise=200)
-dia_result.to_csv('Comparision/MSDIAL_data/results/Nega_DeepDIA_QC_1_1.csv')
