@@ -1,7 +1,7 @@
 # xcms version 3.8.1
 library(xcms)
 
-get_ms1_features <- function(file, snthresh = 5, prefilter = c(1, 100), ppm = 100, peakwidth = c(5, 60)){
+get_ms1_features <- function(file, snthresh = 10, prefilter = c(1, 100), ppm = 100, peakwidth = c(5, 60)){
   data <- readMSData(file, mode = "onDisk") 
   cwp <- CentWaveParam(snthresh = snthresh, prefilter = prefilter, ppm = ppm, peakwidth = peakwidth)
   data <- findChromPeaks(data, param = cwp)

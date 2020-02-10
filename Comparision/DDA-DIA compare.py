@@ -112,7 +112,7 @@ if __name__ == '__main__':
     n_metabodia = DDA_DIA_compare(n_dda, n_deepdia, n_msdial)
 
     # Correlation Violin Plot
-    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(12, 6))
+    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
     axes[0,0].violinplot([list(metdia['DeepDIA_corr'])], [1], showmeans=False, showmedians=True)
     axes[0,0].violinplot([list(metdia['MSDIAL_corr'])], [2], showmeans=False, showmedians=True)
     axes[0,0].set_xticks(range(4))
@@ -122,7 +122,7 @@ if __name__ == '__main__':
     axes[0,1].violinplot([list(p_metabodia['DeepDIA_corr']), list(n_metabodia['DeepDIA_corr'])], [1,5], showmeans=False, showmedians=True)
     axes[0,1].violinplot([list(p_metabodia['MSDIAL_corr']), list(n_metabodia['MSDIAL_corr'])], [3,7], showmeans=False, showmedians=True)
     axes[0,1].set_xticks(range(8))
-    axes[0,1].set_xticklabels(['', 'DeepDIA', '\nPositive', 'MSDIAL', '', 'DeepDIA', '\nNegative', 'MSDIAL'])
+    axes[0,1].set_xticklabels(['', 'DeepMetDIA', '\nPositive', 'MSDIAL', '', 'DeepMetDIA', '\nNegative', 'MSDIAL'])
     axes[0,1].set_ylabel('Correlation')
     
     exp_mz = 626.356
@@ -141,8 +141,8 @@ if __name__ == '__main__':
     msdial = msdial[ np.abs(msdial['precursor_rt'] - exp_rt) < rttol ]
     
     axes[1,0].vlines(dda['mz'], 0, dda['intensity'] / np.max(dda['intensity']), color='red', alpha=0.7, label='DDA')
-    axes[1,0].vlines(deepdia['mz'], 0, -deepdia['intensity'] / np.max(deepdia['intensity']), color='blue', alpha=0.7, label='DeepDIA')
-    axes[1,0].text(80, 0.8, 'MS/MS \n precursor:'+str(exp_mz))
+    axes[1,0].vlines(deepdia['mz'], 0, -deepdia['intensity'] / np.max(deepdia['intensity']), color='blue', alpha=0.7, label='DeepMetDIA')
+    axes[1,0].text(80, -0.7, 'MS/MS \n precursor:'+str(exp_mz))
     axes[1,0].axhline(0, color='black')
     axes[1,0].set_xlabel('m/z')
     axes[1,0].set_ylabel('Abundance')
@@ -150,7 +150,7 @@ if __name__ == '__main__':
     
     axes[1,1].vlines(dda['mz'], 0, dda['intensity']/ np.max(dda['intensity']), color='red', alpha=0.8, label='DDA')
     axes[1,1].vlines(msdial['mz'], 0, -msdial['intensity']/ np.max(msdial['intensity']), color='orange', alpha=0.8, label='MS-DIAL')
-    axes[1,1].text(60, 0.8, 'MS/MS \nprecursor:'+str(exp_mz))
+    axes[1,1].text(80, -0.7, 'MS/MS \nprecursor:'+str(exp_mz))
     axes[1,1].axhline(0, color='black')
     axes[1,1].set_xlabel('m/z')
     axes[1,1].set_ylabel('Abundance')
@@ -158,3 +158,107 @@ if __name__ == '__main__':
     
     plt.show()
     
+
+    # coelution handling
+    # example 1
+    from DeepDIA.utils import parser_mzml, extract_eic, fragment_eic, get_ms2
+    from DeepDIA.plot import plot_ms
+    
+    file = 'Comparision/MetaboDIA_Data/data/PH697097_pos_SWATH.mzML'
+    peaks = parser_mzml(file)
+    peaks1 = [p for p in peaks if p.getMSLevel()==1]
+    peaks2 = [p for p in peaks if p.getMSLevel()==2]
+    precursors = np.unique([p.getPrecursors()[0].getMZ() for p in peaks2])
+    del(peaks)
+
+    exmz1 = 266.094
+    exrt1 = 391.224
+    exmz2 = 266.122
+    exrt2 = 398.333
+    
+    ms2 = get_ms2(peaks2, precursors, exmz1, exrt1)
+    exeic = extract_eic(peaks1, exmz1, exrt1, rtlength=30)
+     
+    dia1 = deepdia_res[np.round(deepdia_res['precursor_mz'],3) == exmz1]
+    dia1 = dia1[np.round(dia1['precursor_rt'],3) == exrt1]
+    dia2 = deepdia_res[np.round(deepdia_res['precursor_mz'],3) == exmz2]
+    dia2 = dia2[np.round(dia2['precursor_rt'],3) == exrt2]
+    
+    fragmz1 = dia1[dia1['intensity'] > 0.1* max(dia1['intensity'])]['mz']
+    fragmz2 = dia2[dia2['intensity'] > 0.1* max(dia2['intensity'])]['mz']
+    
+    plt.plot(exeic[0], exeic[1], color = 'black', alpha = 0.5, label='precursor') 
+    for fragmz in ms2[0]:
+        frageic = fragment_eic(peaks2, precursors, exmz1, exrt1, fragmz, mztol=0.01, rtlength=30)
+        plt.plot(frageic[0], frageic[1], color='blue', alpha = 0.8)
+        plt.xlim(380, 420)
+        plt.legend(['precursor', 'candidates'])
+    plt.xlabel('RT')
+    plt.ylabel('Abundance')
+    
+    plt.plot(exeic[0], exeic[1], color = 'black', alpha = 0.5, label='precursor') 
+    for fragmz in fragmz1:
+        frageic = fragment_eic(peaks2, precursors, exmz1, exrt1, fragmz, mztol=0.01, rtlength=30)
+        plt.plot(frageic[0], frageic[1], color='red')
+        plt.xlim(380, 420)
+        # plt.xlim(385,395)
+        # plt.ylim(0, 8000)
+        plt.legend(['precursor', 'fragments'])
+    plt.xlabel('RT')
+    plt.ylabel('Abundance')
+    
+    plt.plot(exeic[0], exeic[1], color = 'black', alpha = 0.5, label='precursor') 
+    for fragmz in fragmz2:
+        frageic = fragment_eic(peaks2, precursors, exmz1, exrt1, fragmz, mztol=0.01, rtlength=30)
+        plt.plot(frageic[0], frageic[1], color='red')
+        plt.xlim(380, 420)
+        plt.legend(['precursor', 'fragments'])
+    plt.xlabel('RT')
+    plt.ylabel('Abundance')
+    
+    
+    # example 2
+    exmz1 = 455.298
+    exrt1 = 904.149
+    exmz2 = 455.332
+    exrt2 = 912.273
+    
+    ms2 = get_ms2(peaks2, precursors, exmz1, exrt1)
+    exeic = extract_eic(peaks1, (exmz1+exmz2)/2, exrt1, mztol=0.05, rtlength=30)
+     
+    dia1 = deepdia_res[np.round(deepdia_res['precursor_mz'],3) == exmz1]
+    dia1 = dia1[np.round(dia1['precursor_rt'],3) == exrt1]
+    dia2 = deepdia_res[np.round(deepdia_res['precursor_mz'],3) == exmz2]
+    dia2 = dia2[np.round(dia2['precursor_rt'],3) == exrt2]
+    
+    fragmz1 = dia1[dia1['intensity'] > 0.05* max(dia1['intensity'])]['mz']
+    fragmz2 = dia2[dia2['intensity'] > 0.05* max(dia2['intensity'])]['mz']
+    
+    plt.plot(exeic[0], exeic[1], color = 'black', alpha = 0.5, label='precursor') 
+    for fragmz in ms2[0]:
+        frageic = fragment_eic(peaks2, precursors, exmz1, exrt1, fragmz, mztol=0.01, rtlength=30)
+        plt.plot(frageic[0], frageic[1], color='blue', alpha = 0.8)
+        plt.xlim(895, 930)
+        plt.legend(['precursor', 'candidates'])
+    plt.xlabel('RT')
+    plt.ylabel('Abundance')
+    
+    plt.plot(exeic[0], exeic[1], color = 'black', alpha = 0.5, label='precursor') 
+    for fragmz in fragmz1:
+        frageic = fragment_eic(peaks2, precursors, exmz1, exrt1, fragmz, mztol=0.01, rtlength=30)
+        plt.plot(frageic[0], frageic[1], color='red')
+        plt.xlim(895, 930)
+        plt.legend(['precursor', 'fragments'])
+    plt.xlabel('RT')
+    plt.ylabel('Abundance')
+    
+    plt.plot(exeic[0], exeic[1], color = 'black', alpha = 0.5, label='precursor') 
+    for fragmz in fragmz2:
+        frageic = fragment_eic(peaks2, precursors, exmz1, exrt1, fragmz, mztol=0.01, rtlength=30)
+        plt.plot(frageic[0], frageic[1], color='red')
+        plt.xlim(895, 930)
+        # plt.xlim(905,925)
+        # plt.ylim(0, 8000)
+        plt.legend(['precursor', 'fragments'])
+    plt.xlabel('RT')
+    plt.ylabel('Abundance')    
