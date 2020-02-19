@@ -84,6 +84,7 @@ def DeepDIA_process(file, features, noise=100):
                                     'mz': temp_frag_mz, 'intensity': temp_frag_abund})
         output.append(temp_output)
         # output.write(str(temp_output))
+    output = pd.concat(output)
     # output.close()
     return output
         
