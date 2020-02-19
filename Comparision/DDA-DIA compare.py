@@ -55,8 +55,7 @@ def DB_DIA_compare(db, f_deepdia, f_msdial, mztol=0.05):
     return output
         
 
-
-def DDA_DIA_compare(f_dda, f_deepdia, f_msdial, mztol=0.05, rttol=60):
+def DDA_DIA_compare(f_dda, f_deepdia, f_msdial, mztol=0.05, rttol=30):
     dda_res = pd.read_csv(f_dda)
     deepdia_res = pd.read_csv(f_deepdia)
     msdial_res = pd.read_csv(f_msdial)
