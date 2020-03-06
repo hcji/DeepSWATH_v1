@@ -57,7 +57,7 @@ def DeepDIA_process(file, features, noise=100):
             frageic = fragment_eic(peaks2, precursors, exmz, exrt, fragmz, rtlength=35)
             # plt.plot(frageic[0], frageic[1])
             
-            std_rt = np.linspace(exeic[0][0], exeic[0][-1], 50)
+            std_rt = np.linspace(exeic[0][0], exeic[0][-1], 100)
             std_ex = np.interp(std_rt, exeic[0], exeic[1])
             std_fg = np.interp(std_rt, frageic[0], frageic[1])
             

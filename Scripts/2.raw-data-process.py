@@ -26,7 +26,9 @@ if __name__ == '__main__':
     for f in swath:
         f = 'D:/MetaboDIA_data/CS/' + f
         x = f.replace('SWATH.mzXML', 'IDA.ms2.csv')
+        y = f.replace('SWATH.mzXML', 'SWATH.feature.csv')
         features = pd.read_csv(x)
+        swathfet = pd.read_csv(y)
         peaks = parser_mzxml(f)
         
         peaks1 = [p for p in peaks if p.getMSLevel()==1]
@@ -34,15 +36,24 @@ if __name__ == '__main__':
         precursors = np.unique([p.getPrecursors()[0].getMZ() for p in peaks2])
         del(peaks)
         
-        exs = features[['precursor_mz', 'precursor_rt']]
-        exs = exs.drop_duplicates()
+        exdda = features[['precursor_mz', 'precursor_rt']]
+        exdda = exdda.drop_duplicates()
         
-        for i in tqdm(exs.index):
-            exrt = exs['precursor_rt'][i]
-            exmz = exs['precursor_mz'][i]
+        for i in tqdm(exdda.index):
+            exrtdda = exdda['precursor_rt'][i]
+            exmzdda = exdda['precursor_mz'][i]
             
-            frags = features[features['precursor_rt']==exrt]
-            frags = frags[frags['precursor_mz']==exmz]
+            exdia = swathfet[np.abs(swathfet['mz'] - exmzdda) < 0.01]
+            if len(exdia) < 1:
+                continue
+            if min(np.abs(exdia['rt'] - exrtdda)) > 5:
+                continue
+            else:
+                exrt = exdia['rt'][np.argmin(np.abs(exdia['rt'] - exrtdda))]
+                exmz = exdia['mz'][np.argmin(np.abs(exdia['rt'] - exrtdda))]
+            
+            frags = features[features['precursor_rt']==exrtdda]
+            frags = frags[frags['precursor_mz']==exmzdda]
             
             ms2 = get_ms2(peaks2, precursors, exmz, exrt)
             cid = np.where(np.logical_and(np.abs(exmz - ms2[0]) > 0, ms2[1] > 100))[0]
@@ -59,21 +70,21 @@ if __name__ == '__main__':
                     continue
                 
                 abund = frags['intensity'][j]
-                if abund < 100:
+                if abund < 200:
                     continue
                 
                 if len(decoy_mzs) > 0:
                     decoy_mz = choice(decoy_mzs)
                     decoy_mzs.remove(decoy_mz)
                 else:
-                    decoy_mz = randint(0, int(exmz*1000)) / 1000
+                    break
                     
                 frageic = fragment_eic(peaks2, precursors, exmz, exrt, fragmz, rtlength=35)
                 decoyeic = fragment_eic(peaks2, precursors, exmz, exrt, decoy_mz, rtlength=35)
                 # plt.plot(frageic[0], frageic[1])
                 # plt.plot(decoyeic[0], decoyeic[1])
             
-                std_rt = np.linspace(exeic[0][0], exeic[0][-1], 50)
+                std_rt = np.linspace(exeic[0][0], exeic[0][-1], 100)
                 std_ex = np.interp(std_rt, exeic[0], exeic[1])
                 std_fg = np.interp(std_rt, frageic[0], frageic[1])
                 std_dy = np.interp(std_rt, decoyeic[0], decoyeic[1])
@@ -87,6 +98,7 @@ if __name__ == '__main__':
     
     all_precursor_eics = np.asarray(all_precursor_eics)
     all_fragment_eics = np.asarray(all_fragment_eics)
+    all_decoy_eics = np.asarray(all_decoy_eics)
     np.save('Data/all_precursor_eics.npy', all_precursor_eics)
     np.save('Data/all_fragment_eics.npy', all_fragment_eics)
     np.save('Data/all_decoy_eics.npy', all_decoy_eics)

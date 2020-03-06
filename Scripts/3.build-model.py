@@ -54,14 +54,14 @@ class DIANet:
         model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
         self.model = model
         
-    def train(self, epochs=50):
+    def train(self, epochs=50, save_path = 'Model/DeepDIA_Model.h5'):
         X1 = self.X1
         X2 = self.X2
         Y = self.Y
         
         # call back
         earlyStopping = EarlyStopping(monitor='val_loss', patience=5, verbose=0, mode='min')
-        mcp_save = ModelCheckpoint('Model/DeepDIA_Model.h5', save_best_only=True, monitor='val_loss', mode='min')
+        mcp_save = ModelCheckpoint(save_path, save_best_only=True, monitor='val_loss', mode='min')
         reduce_lr_loss = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=3, verbose=1, epsilon=1e-4, mode='min')
         
         history = self.model.fit([X1, X2], [Y], epochs=epochs, callbacks=[earlyStopping, mcp_save, reduce_lr_loss], validation_split=0.1)
@@ -94,10 +94,25 @@ def plot_roc(y_pred, y_real, classes):
 
 if __name__ == '__main__':
     
-    precursor_eics = np.load('Data/all_precursor_eics.npy')
-    fragment_eics = np.load('Data/all_fragment_eics.npy')
-    decoy_eics = np.load('Data/all_decoy_eics.npy')
+    simu_precursor_eics = np.load('Data/simu_precursor_eics.npy')
+    simu_fragment_eics = np.load('Data/simu_fragment_eics.npy')
+    simu_decoy_eics = np.load('Data/simu_decoy_eics.npy')
     
+    exp_precursor_eics = np.load('Data/all_precursor_eics.npy')
+    exp_fragment_eics = np.load('Data/all_fragment_eics.npy')
+    exp_decoy_eics = np.load('Data/all_decoy_eics.npy')
+    
+    precursor_eics = np.vstack((simu_precursor_eics, exp_precursor_eics))
+    fragment_eics = np.vstack((simu_fragment_eics, exp_fragment_eics))
+    decoy_eics = np.vstack((simu_decoy_eics, exp_decoy_eics))
+    
+    del(simu_precursor_eics)
+    del(simu_fragment_eics)
+    del(simu_decoy_eics)
+    del(exp_precursor_eics)
+    del(exp_fragment_eics)
+    del(exp_decoy_eics)
+
     precursor_eics = normalize(precursor_eics, axis=1, norm='max')
     fragment_eics = normalize(fragment_eics, axis=1, norm='max')
     decoy_eics = normalize(decoy_eics, axis=1, norm='max')
@@ -106,6 +121,10 @@ if __name__ == '__main__':
     X2 = np.vstack((fragment_eics, decoy_eics))
     Y = np.append( np.ones(len(fragment_eics)), np.zeros(len(decoy_eics)))
     Y = np.array(pd.get_dummies(Y))
+    
+    del(precursor_eics)
+    del(fragment_eics)
+    del(decoy_eics)
     
     # train test split
     inds = np.arange(len(Y))
@@ -117,11 +136,14 @@ if __name__ == '__main__':
     X2_tr, X2_ts = X2[tr], X2[ts]
     Y_tr, Y_ts = Y[tr], Y[ts]
     
-    mod = DIANet(X1_tr, X2_tr, Y_tr)
-    history = mod.train(epochs=50)
+    del(X1)
+    del(X2)
+    del(Y)
     
-    # evaluation
-    mod = load_model('Model/DeepDIA_Model.h5')
+    mod = DIANet(X1_tr, X2_tr, Y_tr)
+    history = mod.train(epochs=50, save_path='Model/DeepDIA_Model_pretrain.h5')
+    
+    mod = load_model('Model/DeepDIA_Model_pretrain.h5')
     X1_ts = np.expand_dims(X1_ts,-1)
     X2_ts = np.expand_dims(X2_ts,-1)
     Y_pred = mod.predict([X1_ts, X2_ts])
@@ -157,5 +179,7 @@ if __name__ == '__main__':
     axes[1,1].plot([0, 1], [0, 1], color = 'black', alpha= 0.8, linestyle='--')
     axes[1,1].set_ylabel('true positive rate')
     axes[1,1].set_xlabel('false negative rate')
-    axes[1,1].legend(['ROC curve (area = %0.2f)' % roc_auc[2]], loc="lower right")
+    axes[1,1].legend(['ROC curve (area = %0.2f)' % roc_auc], loc="lower right")
+    plt.savefig("Figure/model_eval.svg")
+    
     
