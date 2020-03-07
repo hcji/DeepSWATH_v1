@@ -141,9 +141,9 @@ if __name__ == '__main__':
     del(Y)
     
     mod = DIANet(X1_tr, X2_tr, Y_tr)
-    history = mod.train(epochs=50, save_path='Model/DeepDIA_Model_pretrain.h5')
+    history = mod.train(epochs=50, save_path='Model/DeepDIA_Model.h5')
     
-    mod = load_model('Model/DeepDIA_Model_pretrain.h5')
+    mod = load_model('Model/DeepDIA_Model.h5')
     X1_ts = np.expand_dims(X1_ts,-1)
     X2_ts = np.expand_dims(X2_ts,-1)
     Y_pred = mod.predict([X1_ts, X2_ts])
@@ -181,5 +181,4 @@ if __name__ == '__main__':
     axes[1,1].set_xlabel('false negative rate')
     axes[1,1].legend(['ROC curve (area = %0.2f)' % roc_auc], loc="lower right")
     plt.savefig("Figure/model_eval.svg")
-    
     

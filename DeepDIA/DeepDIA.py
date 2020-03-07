@@ -13,7 +13,7 @@ from tensorflow.keras.models import load_model
 from sklearn.preprocessing import normalize
 from DeepDIA.utils import parser_mzxml, parser_mzml, extract_eic, fragment_eic, get_ms2
 
-def DeepDIA_process(file, features, noise=100):
+def DeepDIA_process(file, features, noise=150):
     # file = 'Comparision/MetDIA_Data/30STD_mix 330ppb-1.mzML'
     # features = pd.read_csv('Comparision/MetDIA_data/results/xcms_ms1_feature.csv')
     # features = features[['mz', 'rt', 'maxo']]
@@ -43,6 +43,8 @@ def DeepDIA_process(file, features, noise=100):
         # plt.plot(exeic[0], exeic[1])
         
         ms2 = get_ms2(peaks2, precursors, exmz, exrt)
+        # plt.vlines(ms2[0], np.repeat(0,len(ms2[0])), ms2[1])
+        
         cid = np.where(np.logical_and(np.abs(exmz - ms2[0]) > 0, ms2[1] > noise))[0]
         candidate_mz, candidate_abund = ms2[0][cid], ms2[1][cid]
         if len(candidate_mz) < 1:

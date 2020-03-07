@@ -17,7 +17,7 @@ def generate_single_profile(decoy = False):
         mu = random.choice(mu)
     else:        
         mu = 50
-    sigma = random.uniform(1,15)
+    sigma = random.uniform(1,10)
     y = np.exp(-1*((x-mu)**2)/(2*(sigma**2)))/(math.sqrt(2*np.pi) * sigma)
     y /= max(y)
     # plt.plot(x, y)
@@ -30,7 +30,7 @@ def generate_overlap_profile(decoy = False):
     for i in range(random.randint(1,3)):
         mu = [random.uniform(20, 40), random.uniform(60, 80)]
         mu = random.choice(mu)
-        sigma = random.uniform(1, 15)
+        sigma = random.uniform(1, 10)
         y2 = np.exp(-1*((x-mu)**2)/(2*(sigma**2)))/(math.sqrt(2*np.pi) * sigma)
         y2 = y2 / max(y2) * random.uniform(0.3, 3)
         y1 += y2
@@ -42,7 +42,7 @@ def generate_overlap_profile(decoy = False):
 def add_noise(y):
     y1 = y
     y1 = y1 * np.array([ random.uniform(0.8, 1.2) for i in range(len(y))])
-    y1 = y1 + np.array([ random.uniform(0, 0.2) for i in range(len(y))])
+    y1 = y1 + np.array([ random.uniform(-0.3, 0.3) for i in range(len(y))])
     y1 /= max(y1)
     # plt.plot(y1)
     return y1
@@ -56,7 +56,7 @@ if __name__ == '__main__':
     simu_fragment_eics = []
     simu_decoy_eics = []    
     
-    for i in tqdm(range(500000)):
+    for i in tqdm(range(72214)):
         
         if random.choice([True, False]):
             x = generate_single_profile()
