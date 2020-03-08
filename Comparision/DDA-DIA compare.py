@@ -78,12 +78,12 @@ def DB_DIA_compare(db, f_deepdia, f_msdial, mztol=0.05):
     return output
         
 
-def DDA_DIA_compare(f_dda, f_deepdia, f_msdial, mztol=0.05, rttol=30):
+def DDA_DIA_compare(f_dda, f_deepdia, f_msdial, mztol=0.05, rttol=40):
     dda_res = pd.read_csv(f_dda)
     deepdia_res = pd.read_csv(f_deepdia)
     msdial_res = pd.read_csv(f_msdial)
     # for fair comparesion, exclude low intensity peaks in msdial
-    msdial_res = msdial_res[msdial_res['intensity'] > 100]
+    msdial_res = msdial_res[msdial_res['intensity'] > 150]
     
     features = dda_res[['precursor_mz', 'precursor_rt', 'precursor_intensity']]
     features = features.drop_duplicates()
@@ -132,7 +132,7 @@ def DDA_DIA_compare(f_dda, f_deepdia, f_msdial, mztol=0.05, rttol=30):
         else:
             msdial_corr = max(msdial_corrs)
             
-        if (deepdia_corr < 0.1) or (msdial_corr < 0.1):
+        if (deepdia_corr < 0.2) or (msdial_corr < 0.2):
             continue
             
         output.loc[i] = [f['precursor_mz'], f['precursor_rt'], f['precursor_intensity'], deepdia_corr, msdial_corr]
@@ -174,13 +174,13 @@ if __name__ == '__main__':
     axes[0,1].violinplot([list(p_metabodia['DeepDIA_corr']), list(n_metabodia['DeepDIA_corr'])], [1,5], showmeans=False, showmedians=True)
     axes[0,1].violinplot([list(p_metabodia['MSDIAL_corr']), list(n_metabodia['MSDIAL_corr'])], [3,7], showmeans=False, showmedians=True)
     axes[0,1].set_xticks(range(8))
-    axes[0,1].set_xticklabels(['', 'DeepMetDIA', '\nPositive', 'MSDIAL', '', 'DeepMetDIA', '\nNegative', 'MSDIAL'])
+    axes[0,1].set_xticklabels(['', 'DeepSWATH', '\nPositive', 'MSDIAL', '', 'DeepSWATH', '\nNegative', 'MSDIAL'])
     axes[0,1].set_ylabel('Correlation')
     
-    exp_mz = 626.356
-    exp_rt = 739.134
-    mztol = 0.01
-    rttol = 15
+    exp_mz = 548.306
+    exp_rt = 1022.68
+    mztol = 0.05
+    rttol = 30
     dda_res = pd.read_csv(p_dda)
     deepdia_res = pd.read_csv(p_deepdia)
     msdial_res = pd.read_csv(p_msdial) 
@@ -191,10 +191,11 @@ if __name__ == '__main__':
     deepdia = deepdia[ np.abs(deepdia['precursor_rt'] - exp_rt) < rttol ]
     msdial = msdial_res[ np.abs(msdial_res['precursor_mz'] - exp_mz) < mztol ]
     msdial = msdial[ np.abs(msdial['precursor_rt'] - exp_rt) < rttol ]
+    msdial = msdial[msdial['intensity'] > 150]
     
     axes[1,0].vlines(dda['mz'], 0, dda['intensity'] / np.max(dda['intensity']), color='red', alpha=0.7, label='DDA')
-    axes[1,0].vlines(deepdia['mz'], 0, -deepdia['intensity'] / np.max(deepdia['intensity']), color='blue', alpha=0.7, label='DeepMetDIA')
-    axes[1,0].text(80, -0.8, 'MS/MS \n precursor:'+str(exp_mz))
+    axes[1,0].vlines(deepdia['mz'], 0, -deepdia['intensity'] / np.max(deepdia['intensity']), color='blue', alpha=0.7, label='DeepSWATH')
+    axes[1,0].text(400, -0.8, 'MS/MS \n precursor:'+str(exp_mz))
     axes[1,0].axhline(0, color='black')
     axes[1,0].set_xlabel('m/z')
     axes[1,0].set_ylabel('Abundance')
@@ -202,13 +203,13 @@ if __name__ == '__main__':
     
     axes[1,1].vlines(dda['mz'], 0, dda['intensity']/ np.max(dda['intensity']), color='red', alpha=0.8, label='DDA')
     axes[1,1].vlines(msdial['mz'], 0, -msdial['intensity']/ np.max(msdial['intensity']), color='orange', alpha=0.8, label='MS-DIAL')
-    axes[1,1].text(80, -0.8, 'MS/MS \nprecursor:'+str(exp_mz))
+    axes[1,1].text(400, -0.8, 'MS/MS \nprecursor:'+str(exp_mz))
     axes[1,1].axhline(0, color='black')
     axes[1,1].set_xlabel('m/z')
     axes[1,1].set_ylabel('Abundance')
     axes[1,1].legend()
     
-    plt.show()
+    plt.savefig('Figure/DDA_DIA_compare.svg')
     
 
     # coelution handling
