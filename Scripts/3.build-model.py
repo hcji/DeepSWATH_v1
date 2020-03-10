@@ -158,19 +158,19 @@ if __name__ == '__main__':
     
     fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
 
-    axes[0,0].plot(history.history['loss'], alpha= 0.8)
-    axes[0,0].plot(history.history['val_loss'], alpha= 0.8)
+    axes[0,0].plot(np.arange(1, len(history.epoch)+1), history.history['loss'], alpha= 0.8)
+    axes[0,0].plot(np.arange(1, len(history.epoch)+1), history.history['val_loss'], alpha= 0.8)
     axes[0,0].set_ylabel('loss')
     axes[0,0].set_xlabel('epoch')
     axes[0,0].legend(['train', 'valid'], loc="lower left")
     
-    axes[0,1].plot(history.history['acc'], alpha= 0.8)
-    axes[0,1].plot(history.history['val_acc'], alpha= 0.8)
+    axes[0,1].plot(np.arange(1, len(history.epoch)+1), history.history['acc'], alpha= 0.8)
+    axes[0,1].plot(np.arange(1, len(history.epoch)+1), history.history['val_acc'], alpha= 0.8)
     axes[0,1].set_ylabel('accuracy')
     axes[0,1].set_xlabel('epoch')
     axes[0,1].legend(['train', 'valid'], loc="lower right")
     
-    axes[1,0].plot(history.history['lr'], color = 'green', alpha= 0.8)
+    axes[1,0].plot(np.arange(1, len(history.epoch)+1), history.history['lr'], color = 'green', alpha= 0.8)
     axes[1,0].set_ylabel('learning rate')
     axes[1,0].set_xlabel('epoch')
     axes[1,0].legend(['learning rate'], loc="lower left")
@@ -180,5 +180,5 @@ if __name__ == '__main__':
     axes[1,1].set_ylabel('true positive rate')
     axes[1,1].set_xlabel('false negative rate')
     axes[1,1].legend(['ROC curve (area = %0.2f)' % roc_auc], loc="lower right")
-    plt.savefig("Figure/model_eval.svg")
+    plt.savefig("Figure/model_eval.png")
     
