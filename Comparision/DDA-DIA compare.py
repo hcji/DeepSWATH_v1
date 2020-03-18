@@ -168,17 +168,17 @@ if __name__ == '__main__':
     axes[0,0].violinplot([list(metdia['DeepDIA_corr'])], [1], showmeans=False, showmedians=True)
     axes[0,0].violinplot([list(metdia['MSDIAL_corr'])], [2], showmeans=False, showmedians=True)
     axes[0,0].set_xticks(range(4))
-    axes[0,0].set_xticklabels(['', 'DeepMetDIA', 'MSDIAL', ''])
+    axes[0,0].set_xticklabels(['', 'DeepMetDIA', 'MS-DIAL', ''])
     axes[0,0].set_ylabel('Correlation')
       
     axes[0,1].violinplot([list(p_metabodia['DeepDIA_corr']), list(n_metabodia['DeepDIA_corr'])], [1,5], showmeans=False, showmedians=True)
     axes[0,1].violinplot([list(p_metabodia['MSDIAL_corr']), list(n_metabodia['MSDIAL_corr'])], [3,7], showmeans=False, showmedians=True)
     axes[0,1].set_xticks(range(8))
-    axes[0,1].set_xticklabels(['', 'DeepSWATH', '\nPositive', 'MSDIAL', '', 'DeepSWATH', '\nNegative', 'MSDIAL'])
+    axes[0,1].set_xticklabels(['', 'DeepSWATH', '\nPositive', 'MS-DIAL', '', 'DeepSWATH', '\nNegative', 'MS-DIAL'])
     axes[0,1].set_ylabel('Correlation')
     
-    exp_mz = 165.054
-    exp_rt = 123.067
+    exp_mz = 548.306
+    exp_rt = 1022.68
     mztol = 0.05
     rttol = 30
     dda_res = pd.read_csv(p_dda)
