@@ -168,7 +168,7 @@ if __name__ == '__main__':
     axes[0,0].violinplot([list(metdia['DeepDIA_corr'])], [1], showmeans=False, showmedians=True)
     axes[0,0].violinplot([list(metdia['MSDIAL_corr'])], [2], showmeans=False, showmedians=True)
     axes[0,0].set_xticks(range(4))
-    axes[0,0].set_xticklabels(['', 'DeepMetDIA', 'MS-DIAL', ''])
+    axes[0,0].set_xticklabels(['', 'DeepSWATH', 'MS-DIAL', ''])
     axes[0,0].set_ylabel('Correlation')
       
     axes[0,1].violinplot([list(p_metabodia['DeepDIA_corr']), list(n_metabodia['DeepDIA_corr'])], [1,5], showmeans=False, showmedians=True)

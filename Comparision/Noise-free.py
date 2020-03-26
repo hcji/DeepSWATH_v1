@@ -15,11 +15,11 @@ from scipy.stats import pearsonr
 from PyCFMID.PyCFMID import cfm_id_database
 
 
-comp = pd.read_csv('Comparision/MetaboDIA_Data/results/comparision_pos.csv')
+comp = pd.read_csv('Comparision/MetaboDIA_Data/results/comparision_neg.csv')
 chebi = pd.read_csv('Data/chebi.csv')
-f_dda = 'Comparision/MetaboDIA_data/results/PH697097_pos_IDA.csv'
-f_deepdia = 'Comparision/MetaboDIA_data/results/PH697097_pos_DeepDIA.csv'
-f_msdial = 'Comparision/MetaboDIA_data/results/PH697097_pos_MSDIAL.csv'
+f_dda = 'Comparision/MetaboDIA_data/results/PH697097_neg_IDA.csv'
+f_deepdia = 'Comparision/MetaboDIA_data/results/PH697097_neg_DeepDIA.csv'
+f_msdial = 'Comparision/MetaboDIA_data/results/PH697097_neg_MSDIAL.csv'
 
 
 def split_precursor(mslist):
@@ -77,10 +77,10 @@ def DDA_DIA_identification(f_dda, f_deepdia, f_msdial, mztol=0.05, rttol=40):
         msdial = msdial[w2][['mz', 'intensity']]
         standard = standard[['mz', 'intensity']]
         
-        if np.min(np.abs(chebi['Mass'] + 1.003 - f['precursor_mz'])) > mztol:
+        if np.min(np.abs(chebi['Mass'] - 1.003 - f['precursor_mz'])) > mztol:
             continue
         else:
-            candidates = chebi[np.abs(chebi['Mass'] + 1.003 - f['precursor_mz']) <= mztol]
+            candidates = chebi[np.abs(chebi['Mass'] - 1.003 - f['precursor_mz']) <= mztol]
         
         os.mkdir('Input')
         candidates[['ChEBI ID', 'SMILES']].to_csv('Input/candidate.txt', index=False, header=False, sep=' ')
@@ -102,12 +102,12 @@ def DDA_DIA_identification(f_dda, f_deepdia, f_msdial, mztol=0.05, rttol=40):
         precursor_rt.append(f['precursor_rt'])
         
         output = pd.DataFrame({'precursor_mz': precursor_mz, 'precursor_rt': precursor_rt, 'rank_deepdia': rank_1, 'rank_msdial': rank_2})
-        output.to_csv('Comparision/MetaboDIA_Data/results/identification_pos.csv')
+        output.to_csv('Comparision/MetaboDIA_Data/results/identification_neg.csv')
     return output
 
 
 if __name__ == '__main__':
         
     output = DDA_DIA_identification(f_dda, f_deepdia, f_msdial)
-    output.to_csv('Comparision/MetaboDIA_Data/results/identification_pos.csv')
+    output.to_csv('Comparision/MetaboDIA_Data/results/identification_neg.csv')
     
