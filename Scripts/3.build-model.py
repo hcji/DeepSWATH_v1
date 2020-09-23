@@ -60,7 +60,7 @@ class DIANet:
         Y = self.Y
         
         # call back
-        earlyStopping = EarlyStopping(monitor='val_loss', patience=5, verbose=0, mode='min')
+        earlyStopping = EarlyStopping(monitor='val_loss', patience=10, verbose=0, mode='min')
         mcp_save = ModelCheckpoint(save_path, save_best_only=True, monitor='val_loss', mode='min')
         reduce_lr_loss = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=3, verbose=1, epsilon=1e-4, mode='min')
         
@@ -94,24 +94,10 @@ def plot_roc(y_pred, y_real, classes):
 
 if __name__ == '__main__':
     
-    simu_precursor_eics = np.load('Data/simu_precursor_eics.npy')
-    simu_fragment_eics = np.load('Data/simu_fragment_eics.npy')
-    simu_decoy_eics = np.load('Data/simu_decoy_eics.npy')
-    
-    exp_precursor_eics = np.load('Data/all_precursor_eics.npy')
-    exp_fragment_eics = np.load('Data/all_fragment_eics.npy')
-    exp_decoy_eics = np.load('Data/all_decoy_eics.npy')
-    
-    precursor_eics = np.vstack((simu_precursor_eics, exp_precursor_eics))
-    fragment_eics = np.vstack((simu_fragment_eics, exp_fragment_eics))
-    decoy_eics = np.vstack((simu_decoy_eics, exp_decoy_eics))
-    
-    del(simu_precursor_eics)
-    del(simu_fragment_eics)
-    del(simu_decoy_eics)
-    del(exp_precursor_eics)
-    del(exp_fragment_eics)
-    del(exp_decoy_eics)
+    precursor_eics = np.load('Data/all_precursor_eics.npy')
+    fragment_eics = np.load('Data/all_fragment_eics.npy')
+    decoy_eics = np.load('Data/all_decoy_eics.npy')
+
 
     precursor_eics = normalize(precursor_eics, axis=1, norm='max')
     fragment_eics = normalize(fragment_eics, axis=1, norm='max')
