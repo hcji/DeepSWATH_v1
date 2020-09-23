@@ -49,8 +49,8 @@ if __name__ == '__main__':
             if min(np.abs(exdia['rt'] - exrtdda)) > 5:
                 continue
             else:
-                exrt = exdia['rt'][np.argmin(np.abs(exdia['rt'] - exrtdda))]
-                exmz = exdia['mz'][np.argmin(np.abs(exdia['rt'] - exrtdda))]
+                exrt = exdia['rt'].iloc[np.argmin(np.abs(exdia['rt'] - exrtdda))]
+                exmz = exdia['mz'].iloc[np.argmin(np.abs(exdia['rt'] - exrtdda))]
             
             frags = features[features['precursor_rt']==exrtdda]
             frags = frags[frags['precursor_mz']==exmzdda]
@@ -64,6 +64,7 @@ if __name__ == '__main__':
             exeic = extract_eic(peaks1, exmz, exrt, rtlength=30)
             # plt.plot(exeic[0], exeic[1])
             
+            
             for j in frags.index:
                 fragmz = frags['mz'][j]
                 if np.min(np.abs(fragmz - candidate_mz)) > 0.05:
@@ -74,13 +75,23 @@ if __name__ == '__main__':
                     continue
                 
                 if len(decoy_mzs) > 0:
-                    decoy_mz = choice(decoy_mzs)
-                    decoy_mzs.remove(decoy_mz)
+                    while True:
+                        if len(decoy_mzs) == 0:
+                            decoyeic = None
+                            break
+                        else:
+                            decoy_mz = choice(decoy_mzs)
+                            decoyeic = fragment_eic(peaks2, precursors, exmz, exrt, decoy_mz, rtlength=35)
+                            decoy_mzs.remove(decoy_mz)
+                            if len(np.where(np.array(decoyeic[1]) > 0)[0]) > 3:
+                                break
                 else:
                     break
+                
+                if decoyeic is None:
+                    continue
                     
                 frageic = fragment_eic(peaks2, precursors, exmz, exrt, fragmz, rtlength=35)
-                decoyeic = fragment_eic(peaks2, precursors, exmz, exrt, decoy_mz, rtlength=35)
                 # plt.plot(frageic[0], frageic[1])
                 # plt.plot(decoyeic[0], decoyeic[1])
             
