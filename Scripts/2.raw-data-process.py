@@ -39,7 +39,7 @@ if __name__ == '__main__':
         exdda = features[['precursor_mz', 'precursor_rt']]
         exdda = exdda.drop_duplicates()
         
-        for i in tqdm(exdda.index):
+        for i in tqdm(exdda.index[range(650,750)]):
             exrtdda = exdda['precursor_rt'][i]
             exmzdda = exdda['precursor_mz'][i]
             
@@ -92,9 +92,15 @@ if __name__ == '__main__':
                     continue
                     
                 frageic = fragment_eic(peaks2, precursors, exmz, exrt, fragmz, rtlength=35)
-                # plt.plot(frageic[0], frageic[1])
-                # plt.plot(decoyeic[0], decoyeic[1])
-            
+                '''
+                plt.figure(dpi = 300)
+                plt.plot(exeic[0], exeic[1], label='precursor')
+                plt.plot(frageic[0], frageic[1], label='fragment')
+                plt.plot(decoyeic[0], decoyeic[1], label='decoy')
+                plt.legend()
+                plt.xlabel('RT')
+                plt.ylabel('Intensity')
+                '''
                 std_rt = np.linspace(exeic[0][0], exeic[0][-1], 100)
                 std_ex = np.interp(std_rt, exeic[0], exeic[1])
                 std_fg = np.interp(std_rt, frageic[0], frageic[1])

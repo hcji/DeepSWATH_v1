@@ -142,7 +142,7 @@ if __name__ == '__main__':
     precision = precision_score(Y_ts[:,0], Y_pred[:,0])
     recall = recall_score(Y_ts[:,0], Y_pred[:,0])
     
-    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
+    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(12, 8), dpi=300)
 
     axes[0,0].plot(np.arange(1, len(history.epoch)+1), history.history['loss'], alpha= 0.8)
     axes[0,0].plot(np.arange(1, len(history.epoch)+1), history.history['val_loss'], alpha= 0.8)
