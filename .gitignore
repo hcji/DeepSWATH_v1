@@ -4,5 +4,6 @@
 /__pycache__
 /Evaluation
 /Comparision/MetaboDIA_data/data/
+/Comparision/MetaboKit_data/data/
 /Comparision/MetDIA_data/data/
 *.npy

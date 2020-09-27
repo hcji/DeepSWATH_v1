@@ -45,7 +45,7 @@ def DeepDIA_process(file, features, noise=150):
         ms2 = get_ms2(peaks2, precursors, exmz, exrt)
         # plt.vlines(ms2[0], np.repeat(0,len(ms2[0])), ms2[1])
         
-        cid = np.where(np.logical_and(np.abs(exmz - ms2[0]) > 0, ms2[1] > noise))[0]
+        cid = np.where(np.logical_and(np.abs(exmz - ms2[0]) > -2.008, ms2[1] > noise))[0]
         candidate_mz, candidate_abund = ms2[0][cid], ms2[1][cid]
         if len(candidate_mz) < 1:
             continue

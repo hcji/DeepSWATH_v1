@@ -30,3 +30,18 @@ features = features[['mz', 'rt', 'maxo']]
 features.columns = ['mz', 'rt', 'intensity']
 dia_result = DeepDIA_process(f, features)
 dia_result.to_csv('Comparision/MetaboDIA_data/results/PH697097_neg_DeepDIA.csv')
+
+# MetaboKit data process
+f = 'Comparision/MetaboKit_data/data/SWATH-POS-Metab-Mix-10ng-ml_r2-SWATH-POS-PathwayMetab-Mix-10ng-ml_r2.mzML'
+features = pd.read_csv('Comparision/MetaboKit_data/results/xcms_ms1_feature_pos.csv')
+features = features[['mz', 'rt', 'maxo']]
+features.columns = ['mz', 'rt', 'intensity']
+dia_result = DeepDIA_process(f, features, noise=30)
+dia_result.to_csv('Comparision/MetaboDIA_data/results/MetaboKit_10ng_pos_DeepDIA.csv')
+
+f = 'Comparision/MetaboKit_Data/data/SWATH-NEG-Metab-Mix-10ng-ml_r2-SWATH-NEG-PathwayMetab-Mix-10ng-ml_r2.mzML'
+features = pd.read_csv('Comparision/MetaboKit_data/results/xcms_ms1_feature_neg.csv')
+features = features[['mz', 'rt', 'maxo']]
+features.columns = ['mz', 'rt', 'intensity']
+dia_result = DeepDIA_process(f, features, noise=30)
+dia_result.to_csv('Comparision/MetaboKit_data/results/MetaboKit_10ng_neg_DeepDIA.csv')

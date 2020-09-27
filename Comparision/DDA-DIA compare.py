@@ -7,9 +7,13 @@ Created on Sat Jan 11 08:10:25 2020
 
 import numpy as np
 import pandas as pd
-from scipy.stats import pearsonr
 from tqdm import tqdm
 
+def dot_product(x, y):
+    x = np.array(x)
+    y = np.array(y)
+    return np.dot(x, y) / np.sqrt(np.dot(x, x) * np.dot(y, y))
+        
 
 def count_features(ms2):
     features = pd.read_csv(ms2)
@@ -64,21 +68,21 @@ def DB_DIA_compare(db, f_deepdia, f_msdial, mztol=0.05):
             deepdia_int = []
             for mz in mzs:
                 deepdia_int.append(np.sum(deepdia[j]['intensity'][ np.abs(deepdia[j]['mz'] - mz) < 0.1 ]))
-            deepdia_corrs.append(np.nanmax([0, pearsonr(std_int, deepdia_int)[0]]))
+            deepdia_corrs.append(np.nanmax(dot_product(std_int, deepdia_int)))
         
         for j in range(len(msdial)):
             msdial_int = []
             for mz in mzs:
                 msdial_int.append(np.sum(msdial[j]['intensity'][ np.abs(msdial[j]['mz'] - mz) < 0.1 ]))
-            msdial_corrs.append(np.nanmax([0, pearsonr(std_int, msdial_int)[0]]))
+            msdial_corrs.append(np.nanmax(dot_product(std_int, msdial_int)))
 
-        deepdia_corr = max(deepdia_corrs)
-        msdial_corr = max(msdial_corrs)
+        deepdia_corr = np.nanmax(deepdia_corrs)
+        msdial_corr = np.nanmax(msdial_corrs)
         output.loc[i] = [f['Name'], f['PrecursorMz'], precursor_intensity, deepdia_corr, msdial_corr]
     return output
         
 
-def DDA_DIA_compare(f_dda, f_deepdia, f_msdial, mztol=0.05, rttol=40):
+def DDA_DIA_compare(f_dda, f_deepdia, f_msdial, mztol=0.05, rttol=20):
     dda_res = pd.read_csv(f_dda)
     deepdia_res = pd.read_csv(f_deepdia)
     msdial_res = pd.read_csv(f_msdial)
@@ -112,7 +116,7 @@ def DDA_DIA_compare(f_dda, f_deepdia, f_msdial, mztol=0.05, rttol=40):
             for mz in mzs:
                 dda_int.append(np.sum(dda['intensity'][ np.abs(dda['mz'] - mz) < 0.15 ]))
                 deepdia_int.append(np.sum(deepdia[j]['intensity'][ np.abs(deepdia[j]['mz'] - mz) < 0.15 ]))
-            deepdia_corrs.append(np.nanmax([0, pearsonr(dda_int, deepdia_int)[0]]))            
+            deepdia_corrs.append(np.nanmax(dot_product(dda_int, deepdia_int)))            
         
         for j in range(len(msdial)):
             mzs = list(set( list(np.round(dda['mz'], 1)) + list(np.round(msdial[j]['mz'], 1)) ))
@@ -120,7 +124,7 @@ def DDA_DIA_compare(f_dda, f_deepdia, f_msdial, mztol=0.05, rttol=40):
             for mz in mzs:
                 dda_int.append(np.sum(dda['intensity'][ np.abs(dda['mz'] - mz) < 0.15 ]))
                 msdial_int.append(np.sum(msdial[j]['intensity'][ np.abs(msdial[j]['mz'] - mz) < 0.15 ]))
-            msdial_corrs.append(np.nanmax([0, pearsonr(dda_int, msdial_int)[0]]))            
+            msdial_corrs.append(np.nanmax(dot_product(dda_int, msdial_int)))            
         
         if len(deepdia_corrs) == 0:
             deepdia_corr = 0
