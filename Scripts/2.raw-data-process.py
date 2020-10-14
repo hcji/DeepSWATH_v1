@@ -7,8 +7,9 @@ Created on Tue Dec 31 09:15:20 2019
 
 import numpy as np
 import pandas as pd
+import pymzml
 from random import choice, randint
-from DeepDIA.utils import parser_mzxml, extract_eic, fragment_eic, get_ms2
+from DeepSWATH.utils import extract_eic, fragment_eic, get_ms2
 
 if __name__ == '__main__':
     
@@ -17,7 +18,7 @@ if __name__ == '__main__':
     from tqdm import tqdm
     
     files = os.listdir('D:/MetaboDIA_data/CS')
-    swath = [f for f in files if 'SWATH.mzXML' in f]
+    swath = [f for f in files if 'SWATH.mzML' in f]
     
     all_precursor_eics = []
     all_fragment_eics = []
@@ -25,21 +26,23 @@ if __name__ == '__main__':
     
     for f in swath:
         f = 'D:/MetaboDIA_data/CS/' + f
-        x = f.replace('SWATH.mzXML', 'IDA.ms2.csv')
-        y = f.replace('SWATH.mzXML', 'SWATH.feature.csv')
+        x = f.replace('SWATH.mzML', 'IDA.ms2.csv')
+        y = f.replace('SWATH.mzML', 'SWATH.feature.csv')
         features = pd.read_csv(x)
         swathfet = pd.read_csv(y)
-        peaks = parser_mzxml(f)
         
-        peaks1 = [p for p in peaks if p.getMSLevel()==1]
-        peaks2 = [p for p in peaks if p.getMSLevel()==2]
-        precursors = np.unique([p.getPrecursors()[0].getMZ() for p in peaks2])
+        reader = pymzml.run.Reader(f)
+        peaks = [p for p in reader]
+        
+        peaks1 = [p for p in peaks if p.ms_level==1]
+        peaks2 = [p for p in peaks if p.ms_level==2]
+        precursors = np.unique([p.selected_precursors[0]['mz'] for p in peaks2])
         del(peaks)
         
         exdda = features[['precursor_mz', 'precursor_rt']]
         exdda = exdda.drop_duplicates()
         
-        for i in tqdm(exdda.index[range(650,750)]):
+        for i in tqdm(exdda.index):
             exrtdda = exdda['precursor_rt'][i]
             exmzdda = exdda['precursor_mz'][i]
             

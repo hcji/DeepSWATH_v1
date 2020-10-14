@@ -31,12 +31,16 @@ def parser_msdial(file, output):
 if __name__ == '__main__':
     
     # MetDIA DIA data
-    metdia_dia = 'Comparision/MetDIA_Data/results/30STD_mix 330ppb-1.mgf'
+    metdia_dia = 'Comparision/MetDIA_Data/data/30STD_mix 330ppb-1.mgf'
     parser_msdial(metdia_dia, 'Comparision/MetDIA_Data/results/30STD_mix_330ppb_1_MSDIAL.csv')
     
     # MetaboDIA DIA data
-    metabodia_dia_pos = 'Comparision/MetaboDIA_Data/results/PH697097_pos_SWATH.mgf'
-    metabodia_dia_neg = 'Comparision/MetaboDIA_Data/results/PH697097_neg_SWATH.mgf'
+    metabodia_dia_pos = 'Comparision/MetaboDIA_Data/data/PH697097_pos_SWATH.mgf'
+    metabodia_dia_neg = 'Comparision/MetaboDIA_Data/data/PH697097_neg_SWATH.mgf'
     parser_msdial(metabodia_dia_pos, 'Comparision/MetaboDIA_Data/results/PH697097_pos_MSDIAL.csv')
-    parser_msdial(metabodia_dia_neg, 'Comparision/MetaboDIA_Data/results/PH697097_neg_MSDIAL.csv')    
+    parser_msdial(metabodia_dia_neg, 'Comparision/MetaboDIA_Data/results/PH697097_neg_MSDIAL.csv')
+    
+    # MetaboKit DIA data
+    metabokit_dia_pos = 'Comparision/MetaboKit_Data/data/SWATH-POS-Metab-Mix-10ng-ml_r2.mgf'
+    parser_msdial(metabokit_dia_pos, 'Comparision/MetaboKit_Data/results/SWATH-POS-Metab-Mix-10ng-ml_r2.csv')
     

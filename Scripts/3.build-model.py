@@ -29,13 +29,13 @@ class DIANet:
         inp_x2 = Input(shape=(dim_x,1))
         
         # conv chrom x1
-        hid_x1 = Conv1D(32, 2, activation='relu', input_shape=(dim_x,1))(inp_x1)
-        hid_x1 = Conv1D(32, 2, activation='relu')(hid_x1)
+        hid_x1 = Conv1D(32, 3, activation='relu', input_shape=(dim_x,1))(inp_x1)
+        hid_x1 = Conv1D(32, 3, activation='relu')(hid_x1)
         hid_x1 = Flatten()(hid_x1)
         
         # conv chrom x2
-        hid_x2 = Conv1D(32, 2, activation='relu', input_shape=(dim_x,1))(inp_x2)
-        hid_x2 = Conv1D(32, 2, activation='relu')(hid_x2)
+        hid_x2 = Conv1D(32, 3, activation='relu', input_shape=(dim_x,1))(inp_x2)
+        hid_x2 = Conv1D(32, 3, activation='relu')(hid_x2)
         hid_x2 = Flatten()(hid_x2)
         
         # concat
@@ -127,9 +127,9 @@ if __name__ == '__main__':
     del(Y)
     
     mod = DIANet(X1_tr, X2_tr, Y_tr)
-    history = mod.train(epochs=50, save_path='Model/DeepDIA_Model.h5')
+    history = mod.train(epochs=50, save_path='Model/DeepSWATH_Model.h5')
     
-    mod = load_model('Model/DeepDIA_Model.h5')
+    mod = load_model('Model/DeepSWATH_Model.h5')
     X1_ts = np.expand_dims(X1_ts,-1)
     X2_ts = np.expand_dims(X2_ts,-1)
     Y_pred = mod.predict([X1_ts, X2_ts])
