@@ -94,11 +94,15 @@ def plot_roc(y_pred, y_real, classes):
 
 if __name__ == '__main__':
     
+    '''s
     precursor_eics = np.load('Data/all_precursor_eics.npy')
     fragment_eics = np.load('Data/all_fragment_eics.npy')
     decoy_eics = np.load('Data/all_decoy_eics.npy')
-
-
+    '''
+    precursor_eics = np.vstack((np.load('Data/all_precursor_eics.npy'), np.load('Data/simu_precursor_eics.npy')))
+    fragment_eics = np.vstack((np.load('Data/all_fragment_eics.npy'), np.load('Data/simu_fragment_eics.npy')))
+    decoy_eics = np.vstack((np.load('Data/all_decoy_eics.npy'), np.load('Data/simu_decoy_eics.npy')))
+    
     precursor_eics = normalize(precursor_eics, axis=1, norm='max')
     fragment_eics = normalize(fragment_eics, axis=1, norm='max')
     decoy_eics = normalize(decoy_eics, axis=1, norm='max')
@@ -127,7 +131,7 @@ if __name__ == '__main__':
     del(Y)
     
     mod = DIANet(X1_tr, X2_tr, Y_tr)
-    history = mod.train(epochs=50, save_path='Model/DeepSWATH_Model.h5')
+    history = mod.train(epochs=50, save_path='Model/DeepSWATH_Model_with_simu.h5')
     
     mod = load_model('Model/DeepSWATH_Model.h5')
     X1_ts = np.expand_dims(X1_ts,-1)

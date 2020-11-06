@@ -12,63 +12,79 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from tensorflow.keras.models import load_model
 from sklearn.preprocessing import normalize
-from DeepSWATH.features import ms2_features
-from DeepSWATH.utils import extract_eic, fragment_eic
+from DeepSWATH.utils import extract_eic, fragment_eic, get_ms2
+from DeepSWATH.utils import parser_mzxml, parser_mzml
 
 def DeepSWATH_process(file, features, min_int=150):
     # file = 'Comparision/MetDIA_Data/data/30STD_mix 330ppb-1.mzML'
     # features = pd.read_csv('Comparision/MetDIA_data/results/xcms_ms1_feature.csv')
     # features = features[['mz', 'rt', 'maxo']]
     # features.columns = ['mz', 'rt', 'intensity']
-    swaths, ms2_all = ms2_features(file, min_int=min_int)
-    precursors = swaths[1:,1]
+    features = features.drop_duplicates()
+    mod = load_model('Model/DeepSWATH_Model_with_simu.h5')
     
-    mod = load_model('Model/DeepSWATH_Model.h5')
-    if file.split('.')[-1] == 'mzML':
-        reader = pymzml.run.Reader(file)
-        all_peaks = dict(zip(swaths[:,1], [[]]*len(swaths)))
-        for p in reader:
-            if p.ms_level == 1:
-                all_peaks[-1.0].append(p)
-            else:
-                j = precursors[np.argmin(np.abs(p.selected_precursors[0]['mz'] - precursors))]
-                all_peaks[j].append(p)
+    if file.split('.')[-1] == 'mzXML':
+        reader = parser_mzxml(file)
+    elif file.split('.')[-1] == 'mzML':
+        reader = parser_mzml(file)
     else:
         raise IOError ('invalid input file')
+    
+    precursors = [-1.0]
+    for p in reader:
+        try:
+            pmz = p.getPrecursors()[0].getMZ()
+        except:
+            continue
+        if pmz < precursors[-1]:
+            break
+        else:
+            precursors.append(pmz)
+    precursors = np.array(precursors)
+    
+    all_peaks = dict(zip(precursors, [[]]*len(precursors)))
+    for p in reader:
+        if p.getMSLevel() == 1:
+            all_peaks[-1.0].append(p)
+        else:
+            j = precursors[np.argmin(np.abs(p.getPrecursors()[0].getMZ() - precursors))]
+            all_peaks[j].append(p)
+    del(reader)
     
     output = []
     # output = pd.DataFrame(columns = ['exid', 'precursor_mz', 'precursor_rt', 'precursor_intensity', 'mz', 'intensity'])
     # output = open (output_path, 'a+')
-    for i in tqdm(range(len(features.index))):
-        exid = features.index[i]
+    for exid in tqdm(features.index):
         exrt = features['rt'][exid]
         exmz = features['mz'][exid]
         exint = features['intensity'][exid]
         exeic = extract_eic(all_peaks[-1.0], exmz, exrt, rtlength=30)
         # plt.plot(exeic[0], exeic[1])
+
+        k = precursors[np.argmin(np.abs(exmz - precursors))]
+        peaks = all_peaks[k]
         
-        ms2_i = ms2_all[np.argmin(np.abs(precursors - exmz))]
-        keep = np.where( np.abs(ms2_i['rt'] - exrt) < 30)[0]
-        if len(keep) < 1:
-            continue
-        else:
-            ms2 = (ms2_i['mz'][keep].values, ms2_i['intensity'][keep].values)
-        # plt.vlines(ms2[0], np.repeat(0,len(ms2[0])), ms2[1])
-        
-        cid = np.where(np.logical_and(np.abs(exmz - ms2[0]) > -2.008, ms2[1] > min_int))[0]
-        candidate_mz, candidate_abund = ms2[0][cid], ms2[1][cid]
+        ms2_i = get_ms2(peaks, precursors, exmz, exrt)      
+        cid = np.where(np.logical_and(np.abs(exmz - ms2_i[0]) > -2.008, ms2_i[1] > min_int))[0]       
+        candidate_mz, candidate_abund = ms2_i[0][cid], ms2_i[1][cid]
         if len(candidate_mz) < 1:
             continue
         
         temp_frag_mz, temp_frag_abund = [], []
         temp_precursor_eics, temp_fragment_eics = [], []
         
-        k = precursors[np.argmin(np.abs(exmz - precursors))]
-        peaks = all_peaks[k]
         for j in range(len(candidate_mz)):
             fragmz = candidate_mz[j]
             fragabund = candidate_abund[j]
+            # remove very near mz
+            if len(temp_frag_mz) > 0:
+                if fragmz - temp_frag_mz[-1] < 0.025:
+                    continue
+            
+            # fragabund = candidate_abund[j]
             frageic = fragment_eic(peaks, precursors, exmz, exrt, fragmz, rtlength=35)
+            if len(np.where(np.array(frageic[1]) > 0)[0]) <= 3:
+                continue
             # plt.plot(frageic[0], frageic[1])
             
             std_rt = np.linspace(exeic[0][0], exeic[0][-1], 100)
@@ -80,6 +96,9 @@ def DeepSWATH_process(file, features, min_int=150):
             temp_precursor_eics.append(std_ex)
             temp_fragment_eics.append(std_fg)
         
+        if len(temp_frag_mz) == 0:
+            continue
+        
         X1 = np.asarray(temp_precursor_eics)
         X2 = np.asarray(temp_fragment_eics)
     
@@ -90,8 +109,16 @@ def DeepSWATH_process(file, features, min_int=150):
     
         prediction = mod.predict([X1, X2])
         pos = np.where(prediction[:,1] > 0.5)[0]
-        # plt.plot(temp_precursor_eics[pos[21]])
-        # plt.plot(temp_fragment_eics[pos[21]])
+        '''
+        plt.figure(dpi = 300)
+        plt.plot(temp_precursor_eics[0], color = 'blue')
+        for a in range(len(temp_fragment_eics)):
+            plt.plot(temp_fragment_eics[a], color = 'gray')
+        
+        for p in pos:
+            plt.plot(temp_fragment_eics[p], color='red')
+        plt.show()
+        '''
         temp_frag_mz = np.asarray(temp_frag_mz)[pos]
         temp_frag_abund = np.asarray(temp_frag_abund)[pos]
         temp_output = pd.DataFrame({'exid': exid, 'precursor_mz': exmz, 'precursor_rt': exrt, 'precursor_intensity': exint,
@@ -101,4 +128,3 @@ def DeepSWATH_process(file, features, min_int=150):
     output = pd.concat(output)
     # output.close()
     return output
-        

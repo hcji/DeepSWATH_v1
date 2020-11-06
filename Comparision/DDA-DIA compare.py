@@ -156,7 +156,7 @@ def DDA_DIA_compare(f_dda, f_deepdia, f_msdial, f_decdia, noise=150, mztol=0.05,
                 dda_int.append(np.sum(dda['intensity'][ np.abs(dda['mz'] - mz) < 0.15 ]))
                 msdial_int.append(np.sum(msdial[j]['intensity'][ np.abs(msdial[j]['mz'] - mz) < 0.15 ]))
             msdial_corrs.append(np.nanmax(dot_product(dda_int, msdial_int)))
-            
+
         for j in range(len(decdia)):
             mzs = list(set( list(np.round(dda['mz'], 1)) + list(np.round(decdia[j]['mz'], 1)) ))
             dda_int, decdia_int = [], []
@@ -164,7 +164,7 @@ def DDA_DIA_compare(f_dda, f_deepdia, f_msdial, f_decdia, noise=150, mztol=0.05,
                 dda_int.append(np.sum(dda['intensity'][ np.abs(dda['mz'] - mz) < 0.15 ]))
                 decdia_int.append(np.sum(decdia[j]['intensity'][ np.abs(decdia[j]['mz'] - mz) < 0.15 ]))
             decdia_corrs.append(np.nanmax(dot_product(dda_int, decdia_int))) 
-        
+    
         if len(deepdia_corrs) == 0:
             deepdia_corr = 0
         else:
@@ -174,7 +174,7 @@ def DDA_DIA_compare(f_dda, f_deepdia, f_msdial, f_decdia, noise=150, mztol=0.05,
             msdial_corr = 0
         else:
             msdial_corr = max(msdial_corrs)
-            
+        
         if len(decdia_corrs) == 0:
             decdia_corr = 0
         else:
@@ -221,11 +221,12 @@ if __name__ == '__main__':
     n_metabodia.to_csv('Comparision/MetaboDIA_Data/results/comparision_neg.csv')
 
     # Correlation Violin Plot
-    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
+    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(12, 8), dpi=300)
     axes[0,0].violinplot([list(metdia['DeepDIA_corr'])], [1], showmeans=False, showmedians=True)
     axes[0,0].violinplot([list(metdia['MSDIAL_corr'])], [2], showmeans=False, showmedians=True)
-    axes[0,0].set_xticks(range(4))
-    axes[0,0].set_xticklabels(['', 'DeepSWATH', 'MS-DIAL', ''])
+    axes[0,0].violinplot([list(metdia['DecMetDIA_corr'])], [3], showmeans=False, showmedians=True)
+    axes[0,0].set_xticks(range(5))
+    axes[0,0].set_xticklabels(['', 'DeepSWATH', 'MS-DIAL', 'DecMetDIA_corr',''])
     axes[0,0].set_ylabel('Correlation')
       
     axes[0,1].violinplot([list(p_metabodia['DeepDIA_corr']), list(n_metabodia['DeepDIA_corr'])], [1,5], showmeans=False, showmedians=True)
