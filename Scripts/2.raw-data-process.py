@@ -7,7 +7,7 @@ Created on Tue Dec 31 09:15:20 2019
 
 import numpy as np
 import pandas as pd
-from random import choice
+from random import choice, randint
 from DeepDIA.utils import parser_mzxml, extract_eic, fragment_eic, get_ms2
 
 if __name__ == '__main__':
@@ -49,8 +49,8 @@ if __name__ == '__main__':
             if min(np.abs(exdia['rt'] - exrtdda)) > 5:
                 continue
             else:
-                exrt = exdia['rt'].iloc[np.argmin(np.abs(exdia['rt'] - exrtdda))]
-                exmz = exdia['mz'].iloc[np.argmin(np.abs(exdia['rt'] - exrtdda))]
+                exrt = exdia['rt'][np.argmin(np.abs(exdia['rt'] - exrtdda))]
+                exmz = exdia['mz'][np.argmin(np.abs(exdia['rt'] - exrtdda))]
             
             frags = features[features['precursor_rt']==exrtdda]
             frags = frags[frags['precursor_mz']==exmzdda]
@@ -64,7 +64,6 @@ if __name__ == '__main__':
             exeic = extract_eic(peaks1, exmz, exrt, rtlength=30)
             # plt.plot(exeic[0], exeic[1])
             
-            
             for j in frags.index:
                 fragmz = frags['mz'][j]
                 if np.min(np.abs(fragmz - candidate_mz)) > 0.05:
@@ -75,32 +74,16 @@ if __name__ == '__main__':
                     continue
                 
                 if len(decoy_mzs) > 0:
-                    while True:
-                        if len(decoy_mzs) == 0:
-                            decoyeic = None
-                            break
-                        else:
-                            decoy_mz = choice(decoy_mzs)
-                            decoyeic = fragment_eic(peaks2, precursors, exmz, exrt, decoy_mz, rtlength=35)
-                            decoy_mzs.remove(decoy_mz)
-                            if len(np.where(np.array(decoyeic[1]) > 0)[0]) > 3:
-                                break
+                    decoy_mz = choice(decoy_mzs)
+                    decoy_mzs.remove(decoy_mz)
                 else:
                     break
-                
-                if decoyeic is None:
-                    continue
                     
                 frageic = fragment_eic(peaks2, precursors, exmz, exrt, fragmz, rtlength=35)
-                '''
-                plt.figure(dpi = 300)
-                plt.plot(exeic[0], exeic[1], label='precursor')
-                plt.plot(frageic[0], frageic[1], label='fragment')
-                plt.plot(decoyeic[0], decoyeic[1], label='decoy')
-                plt.legend()
-                plt.xlabel('RT')
-                plt.ylabel('Intensity')
-                '''
+                decoyeic = fragment_eic(peaks2, precursors, exmz, exrt, decoy_mz, rtlength=35)
+                # plt.plot(frageic[0], frageic[1])
+                # plt.plot(decoyeic[0], decoyeic[1])
+            
                 std_rt = np.linspace(exeic[0][0], exeic[0][-1], 100)
                 std_ex = np.interp(std_rt, exeic[0], exeic[1])
                 std_fg = np.interp(std_rt, frageic[0], frageic[1])

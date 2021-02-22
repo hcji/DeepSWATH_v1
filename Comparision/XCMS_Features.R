@@ -21,11 +21,3 @@ metabodia_pos_fet <- get_ms1_features(metabodia_pos_file, prefilter = c(1, 500))
 metabodia_neg_fet <- get_ms1_features(metabodia_neg_file, prefilter = c(1, 500))
 write.csv(metabodia_pos_fet, 'Comparision/MetaboDIA_Data/results/xcms_ms1_feature_pos.csv')
 write.csv(metabodia_neg_fet, 'Comparision/MetaboDIA_Data/results/xcms_ms1_feature_neg.csv')
-
-# MetaboKit data
-metabodia_pos_file <- 'Comparision/MetaboKit_Data/data/SWATH-POS-Metab-Mix-10ng-ml_r2-SWATH-POS-PathwayMetab-Mix-10ng-ml_r2.mzML'
-metabodia_neg_file <- 'Comparision/MetaboKit_Data/data/SWATH-NEG-Metab-Mix-10ng-ml_r2-SWATH-NEG-PathwayMetab-Mix-10ng-ml_r2.mzML'
-metabodia_pos_fet <- get_ms1_features(metabodia_pos_file, snthresh = 3, prefilter = c(1, 100))
-metabodia_neg_fet <- get_ms1_features(metabodia_neg_file, snthresh = 3, prefilter = c(1, 100))
-write.csv(metabodia_pos_fet, 'Comparision/MetaboKit_Data/results/xcms_ms1_feature_pos.csv')
-write.csv(metabodia_neg_fet, 'Comparision/MetaboKit_Data/results/xcms_ms1_feature_neg.csv')

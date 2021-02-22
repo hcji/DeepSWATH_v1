@@ -7,23 +7,9 @@ Created on Sat Jan 11 08:10:25 2020
 
 import numpy as np
 import pandas as pd
+from scipy.stats import pearsonr
 from tqdm import tqdm
-from libmetgem import msp
 
-def parser_msp(f):
-    par = msp.read(f)
-    res = pd.DataFrame(columns=['precursor_mz', 'precursor_rt', 'mz', 'intensity'])
-    for (inf, pks) in par:
-        for j in range(len(pks)):
-            res.loc[len(res)] = [inf['precursormz'], inf['retentiontime'], pks[j,0], pks[j,1]]
-    return res      
-            
-        
-def dot_product(x, y):
-    x = np.array(x)
-    y = np.array(y)
-    return np.dot(x, y) / np.sqrt(np.dot(x, x) * np.dot(y, y))
-        
 
 def count_features(ms2):
     features = pd.read_csv(ms2)
@@ -51,103 +37,82 @@ def split_precursor(mslist):
     return output
 
 
-def DB_DIA_compare(db, f_deepdia, f_msdial, f_decdia, mztol=0.05):
+def DB_DIA_compare(db, f_deepdia, f_msdial, mztol=0.05):
     db_res = pd.read_csv(db)
     deepdia_res = pd.read_csv(f_deepdia)
     msdial_res = pd.read_csv(f_msdial)
-    decdia_res = parser_msp(f_decdia)
     
     features = db_res[['Name', 'PrecursorMz']]
     features = features.drop_duplicates()
     
-    output = pd.DataFrame(columns=['Name', 'precursor_mz', 'precursor_intensity', 'DeepDIA_corr', 'MSDIAL_corr', 'DecMetDIA_corr'])
+    output = pd.DataFrame(columns=['Name', 'precursor_mz', 'precursor_intensity', 'DeepDIA_corr', 'MSDIAL_corr'])
     for i in tqdm(range(features.shape[0])):
         f = features.iloc[i,:]
         standard = db_res[db_res['PrecursorMz'] == f['PrecursorMz']]
         deepdia = deepdia_res[ np.abs(deepdia_res['precursor_mz'] - f['PrecursorMz']) < mztol]
         msdial = msdial_res[ np.abs(msdial_res['precursor_mz'] - f['PrecursorMz']) < mztol]
-        decdia = decdia_res[ np.abs(decdia_res['precursor_mz'] - f['PrecursorMz']) < mztol]
         precursor_intensity = np.mean(deepdia['precursor_intensity'])
         
         deepdia = split_precursor(deepdia)
         msdial = split_precursor(msdial)
-        decdia = split_precursor(decdia)
         
         mzs = standard['ProductMz']
         std_int = np.array(standard['LibraryIntensity'])
         
-        deepdia_corrs, msdial_corrs, decdia_corrs = [], [], []
+        deepdia_corrs, msdial_corrs = [], []
         for j in range(len(deepdia)):
             deepdia_int = []
             for mz in mzs:
                 deepdia_int.append(np.sum(deepdia[j]['intensity'][ np.abs(deepdia[j]['mz'] - mz) < 0.1 ]))
-            deepdia_corrs.append(np.nanmax(dot_product(std_int, deepdia_int)))
+            deepdia_corrs.append(np.nanmax([0, pearsonr(std_int, deepdia_int)[0]]))
         
         for j in range(len(msdial)):
             msdial_int = []
             for mz in mzs:
                 msdial_int.append(np.sum(msdial[j]['intensity'][ np.abs(msdial[j]['mz'] - mz) < 0.1 ]))
-            msdial_corrs.append(np.nanmax(dot_product(std_int, msdial_int)))
-        
-        for j in range(len(decdia)):
-            decdia_int = []
-            for mz in mzs:
-                decdia_int.append(np.sum(decdia[j]['intensity'][ np.abs(decdia[j]['mz'] - mz) < 0.1 ]))
-            decdia_corrs.append(np.nanmax(dot_product(std_int, decdia_int)))
-    
-        deepdia_corr = np.nanmax(deepdia_corrs)
-        msdial_corr = np.nanmax(msdial_corrs)
-        decdia_corr = np.nanmax(decdia_corrs)
-        output.loc[i] = [f['Name'], f['PrecursorMz'], precursor_intensity, deepdia_corr, msdial_corr, decdia_corr]
-    
+            msdial_corrs.append(np.nanmax([0, pearsonr(std_int, msdial_int)[0]]))
+
+        deepdia_corr = max(deepdia_corrs)
+        msdial_corr = max(msdial_corrs)
+        output.loc[i] = [f['Name'], f['PrecursorMz'], precursor_intensity, deepdia_corr, msdial_corr]
     return output
         
 
-def DDA_DIA_compare(f_dda, f_deepdia, f_msdial, f_decdia, noise=150, mztol=0.05, rttol=20):
+def DDA_DIA_compare(f_dda, f_deepdia, f_msdial, mztol=0.05, rttol=40):
     dda_res = pd.read_csv(f_dda)
     deepdia_res = pd.read_csv(f_deepdia)
     msdial_res = pd.read_csv(f_msdial)
-    decdia_res = parser_msp(f_decdia)
     # for fair comparesion, exclude low intensity peaks in msdial
-    msdial_res = msdial_res[msdial_res['intensity'] > noise]
+    msdial_res = msdial_res[msdial_res['intensity'] > 150]
     
     features = dda_res[['precursor_mz', 'precursor_rt', 'precursor_intensity']]
     features = features.drop_duplicates()
     
-    output = pd.DataFrame(columns=['precursor_mz', 'precursor_rt', 'precursor_intensity', 'DeepDIA_corr', 'MSDIAL_corr', 'DecMetDIA_corr'])
+    output = pd.DataFrame(columns=['precursor_mz', 'precursor_rt', 'precursor_intensity', 'DeepDIA_corr', 'MSDIAL_corr'])
     for i in tqdm(range(features.shape[0])):
         f = features.iloc[i,:]
         dda = dda_res[dda_res['precursor_mz'] == f['precursor_mz']]
         dda = dda[dda['precursor_rt'] == f['precursor_rt']]
-        dda = split_precursor(dda)
-        wh = np.argmax([max(d['precursor_mz']) for d in dda])
-        dda = dda[wh]
         
         deepdia = deepdia_res[ np.abs(deepdia_res['precursor_mz'] - f['precursor_mz']) < mztol ]
         deepdia = deepdia[ np.abs(deepdia['precursor_rt'] - f['precursor_rt']) < rttol ]
         msdial = msdial_res[ np.abs(msdial_res['precursor_mz'] - f['precursor_mz']) < mztol ]
         msdial = msdial[ np.abs(msdial['precursor_rt'] - f['precursor_rt']) < rttol ]
-        decdia = decdia_res[ np.abs(decdia_res['precursor_mz'] - f['precursor_mz']) < mztol ]
-        decdia = decdia[ np.abs(decdia['precursor_rt'] - f['precursor_rt']) < rttol ]
 
         deepdia = split_precursor(deepdia)
         msdial = split_precursor(msdial)
-        decdia = split_precursor(decdia)
-        
-        if min(len(deepdia), len(msdial), len(decdia)) == 0:
-            continue
 
         if dda.shape[0] <= 3:
             continue
         
-        deepdia_corrs, msdial_corrs, decdia_corrs = [], [], []
+        deepdia_corrs, msdial_corrs = [], []
         for j in range(len(deepdia)):
             mzs = list(set( list(np.round(dda['mz'], 1)) + list(np.round(deepdia[j]['mz'], 1)) ))
             dda_int, deepdia_int = [], []
             for mz in mzs:
                 dda_int.append(np.sum(dda['intensity'][ np.abs(dda['mz'] - mz) < 0.15 ]))
                 deepdia_int.append(np.sum(deepdia[j]['intensity'][ np.abs(deepdia[j]['mz'] - mz) < 0.15 ]))
-            deepdia_corrs.append(np.nanmax(dot_product(dda_int, deepdia_int)))            
+            deepdia_corrs.append(np.nanmax([0, pearsonr(dda_int, deepdia_int)[0]]))            
         
         for j in range(len(msdial)):
             mzs = list(set( list(np.round(dda['mz'], 1)) + list(np.round(msdial[j]['mz'], 1)) ))
@@ -155,16 +120,8 @@ def DDA_DIA_compare(f_dda, f_deepdia, f_msdial, f_decdia, noise=150, mztol=0.05,
             for mz in mzs:
                 dda_int.append(np.sum(dda['intensity'][ np.abs(dda['mz'] - mz) < 0.15 ]))
                 msdial_int.append(np.sum(msdial[j]['intensity'][ np.abs(msdial[j]['mz'] - mz) < 0.15 ]))
-            msdial_corrs.append(np.nanmax(dot_product(dda_int, msdial_int)))
-
-        for j in range(len(decdia)):
-            mzs = list(set( list(np.round(dda['mz'], 1)) + list(np.round(decdia[j]['mz'], 1)) ))
-            dda_int, decdia_int = [], []
-            for mz in mzs:
-                dda_int.append(np.sum(dda['intensity'][ np.abs(dda['mz'] - mz) < 0.15 ]))
-                decdia_int.append(np.sum(decdia[j]['intensity'][ np.abs(decdia[j]['mz'] - mz) < 0.15 ]))
-            decdia_corrs.append(np.nanmax(dot_product(dda_int, decdia_int))) 
-    
+            msdial_corrs.append(np.nanmax([0, pearsonr(dda_int, msdial_int)[0]]))            
+        
         if len(deepdia_corrs) == 0:
             deepdia_corr = 0
         else:
@@ -174,16 +131,11 @@ def DDA_DIA_compare(f_dda, f_deepdia, f_msdial, f_decdia, noise=150, mztol=0.05,
             msdial_corr = 0
         else:
             msdial_corr = max(msdial_corrs)
-        
-        if len(decdia_corrs) == 0:
-            decdia_corr = 0
-        else:
-            decdia_corr = max(decdia_corrs)
-        
-        if (deepdia_corr < 0.2) or (msdial_corr < 0.2) or (decdia_corr < 0.2):
+            
+        if (deepdia_corr < 0.2) or (msdial_corr < 0.2):
             continue
-        
-        output.loc[i] = [f['precursor_mz'], f['precursor_rt'], f['precursor_intensity'], deepdia_corr, msdial_corr, decdia_corr]
+            
+        output.loc[i] = [f['precursor_mz'], f['precursor_rt'], f['precursor_intensity'], deepdia_corr, msdial_corr]
     return output
 
         
@@ -195,17 +147,8 @@ if __name__ == '__main__':
     db = 'Comparision/MetDIA_data/results/30STD_Database.csv'
     f_deepdia = 'Comparision/MetDIA_data/results/30STD_mix_330ppb_1_DeepDIA.csv'
     f_msdial = 'Comparision/MetDIA_data/results/30STD_mix_330ppb_1_MSDIAL.csv'
-    f_decdia = 'Comparision/MetDIA_Data/data/DecoMetDIA_Result/spec_consensus.msp'
-    metdia = DB_DIA_compare(db, f_deepdia, f_msdial, f_decdia, mztol=0.05)
+    metdia = DB_DIA_compare(db, f_deepdia, f_msdial, mztol=0.05)
     metdia.to_csv('Comparision/MetDIA_Data/results/comparision.csv')
-    
-    # MetaboKit Comparision
-    f_dda = 'Comparision/MetaboKit_Data/results/MetaboKit_pos_IDA.csv'
-    f_deepdia = 'Comparision/MetaboKit_data/results/MetaboKit_10ng_pos_DeepDIA.csv'
-    f_msdial = 'Comparision/MetaboKit_Data/results/SWATH-POS-Metab-Mix-10ng-ml_r2.csv'
-    f_decdia = 'Comparision/MetaboKit_Data/data/pos/DecoMetDIA_Result/spec_consensus.msp'
-    metabokit = DDA_DIA_compare(f_dda, f_deepdia, f_msdial, f_decdia, noise=30)
-    metabokit.to_csv('Comparision/MetaboKit_Data/results/comparision_pos.csv')    
     
     # MetaboDIA Comparision
     p_dda = 'Comparision/MetaboDIA_data/results/PH697097_pos_IDA.csv'
@@ -221,12 +164,11 @@ if __name__ == '__main__':
     n_metabodia.to_csv('Comparision/MetaboDIA_Data/results/comparision_neg.csv')
 
     # Correlation Violin Plot
-    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(12, 8), dpi=300)
+    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
     axes[0,0].violinplot([list(metdia['DeepDIA_corr'])], [1], showmeans=False, showmedians=True)
     axes[0,0].violinplot([list(metdia['MSDIAL_corr'])], [2], showmeans=False, showmedians=True)
-    axes[0,0].violinplot([list(metdia['DecMetDIA_corr'])], [3], showmeans=False, showmedians=True)
-    axes[0,0].set_xticks(range(5))
-    axes[0,0].set_xticklabels(['', 'DeepSWATH', 'MS-DIAL', 'DecMetDIA_corr',''])
+    axes[0,0].set_xticks(range(4))
+    axes[0,0].set_xticklabels(['', 'DeepSWATH', 'MS-DIAL', ''])
     axes[0,0].set_ylabel('Correlation')
       
     axes[0,1].violinplot([list(p_metabodia['DeepDIA_corr']), list(n_metabodia['DeepDIA_corr'])], [1,5], showmeans=False, showmedians=True)
